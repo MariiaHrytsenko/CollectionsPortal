@@ -1,14 +1,11 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Identity;
+using System;
 using System.Collections.Generic;
 
 namespace collectionsProject.Models;
 
-public partial class User
+public partial class User : IdentityUser
 {
-    public int Iduser { get; set; }
-
-    public string? LogData { get; set; }
-
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
 
     public virtual ICollection<Friend> FriendIdreceiverNavigations { get; set; } = new List<Friend>();

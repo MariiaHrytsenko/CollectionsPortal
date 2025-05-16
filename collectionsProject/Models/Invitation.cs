@@ -7,7 +7,7 @@ public partial class Invitation
 {
     public int Idinvitation { get; set; }
 
-    public int? Idinviter { get; set; }
+    public string? Idinviter { get; set; }
 
     public string? Email { get; set; }
 
@@ -15,7 +15,7 @@ public partial class Invitation
 
     public DateTime? CreatedDate { get; set; }
 
-    public int? Idrequester { get; set; }
+    public string? Idrequester { get; set; }
 
     public virtual User? IdinviterNavigation { get; set; }
 

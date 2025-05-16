@@ -9,7 +9,7 @@ public partial class Comment
 
     public int? Iditem { get; set; }
 
-    public int? Idcommentator { get; set; }
+    public string? Idcommentator { get; set; }
 
     public string? ContentComment { get; set; }
 

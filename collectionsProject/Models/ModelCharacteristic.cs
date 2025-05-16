@@ -9,7 +9,7 @@ public partial class ModelCharacteristic
 
     public string? NameCharacteristic { get; set; }
 
-    public int? Iduser { get; set; }
+    public string? Iduser { get; set; }
 
     public virtual User? IduserNavigation { get; set; }
 

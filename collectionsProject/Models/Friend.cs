@@ -7,9 +7,9 @@ public partial class Friend
 {
     public int Idfriendship { get; set; }
 
-    public int? Idrequester { get; set; }
+    public string? Idrequester { get; set; }
 
-    public int? Idreceiver { get; set; }
+    public string? Idreceiver { get; set; }
 
     public virtual User? IdreceiverNavigation { get; set; }
 

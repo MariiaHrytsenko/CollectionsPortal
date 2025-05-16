@@ -194,16 +194,6 @@ public partial class DbFromExistingContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.Iduser);
-
-            entity.ToTable("user");
-
-            entity.Property(e => e.Iduser)
-                .ValueGeneratedNever()
-                .HasColumnName("IDuser");
-            entity.Property(e => e.LogData)
-                .HasColumnType("VARCHAR(45)")
-                .HasColumnName("logData");
         });
 
         OnModelCreatingPartial(modelBuilder);

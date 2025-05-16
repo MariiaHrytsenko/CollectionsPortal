@@ -9,7 +9,7 @@ public partial class ModelCategory
 
     public string? NameCategory { get; set; }
 
-    public int? Iduser { get; set; }
+    public string? Iduser { get; set; }
 
     public virtual User? IduserNavigation { get; set; }
 

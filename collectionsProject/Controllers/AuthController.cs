@@ -3,7 +3,6 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using collectionsProject.Data;
 using collectionsProject.Models;
 
 namespace collectionsProject.Controllers
@@ -12,25 +11,25 @@ namespace collectionsProject.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly DbFromExistingContext _context;
         private readonly string _jwtKey;
 
-        public AuthController(ApplicationDbContext context, IConfiguration config)
+        public AuthController(DbFromExistingContext context, IConfiguration config)
         {
             _context = context;
             _jwtKey = config["Jwt:Key"];
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register(string email, string password)
+        public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
-            if (_context.Users.Any(u => u.Email == email))
+            if (_context.Users.Any(u => u.Email == dto.Email))
                 return BadRequest("Email already exists");
 
             var user = new User
             {
-                Email = email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(password)
+                Email = dto.Email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password)
             };
 
             _context.Users.Add(user);
@@ -40,11 +39,11 @@ namespace collectionsProject.Controllers
         }
 
         [HttpPost("login")]
-        public IActionResult Login(string email, string password)
+        public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
-            var user = _context.Users.SingleOrDefault(u => u.Email == email);
+            var user = _context.Users.SingleOrDefault(u => u.Email == dto.Email);
 
-            if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
                 return Unauthorized("Invalid credentials");
 
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -52,7 +51,7 @@ namespace collectionsProject.Controllers
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new Claim[]
+                Subject = new ClaimsIdentity(new[]
                 {
                     new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                     new Claim(ClaimTypes.Email, user.Email)
@@ -66,5 +65,19 @@ namespace collectionsProject.Controllers
 
             return Ok(new { Token = tokenString });
         }
+    }
+
+    // DTO для реєстрації
+    public class RegisterDto
+    {
+        public string Email { get; set; }
+        public string Password { get; set; }
+    }
+
+    // DTO для логіну
+    public class LoginDto
+    {
+        public string Email { get; set; }
+        public string Password { get; set; }
     }
 }
