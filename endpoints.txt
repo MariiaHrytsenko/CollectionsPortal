@@ -1,0 +1,11 @@
+USER
+/api/Auth/register 
+  {
+  "email": "string",
+  "password": "string"
+  }
+/api/Auth/login
+  {
+    "email": "string",
+    "password": "string"
+  }
