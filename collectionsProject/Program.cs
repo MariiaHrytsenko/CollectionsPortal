@@ -3,6 +3,17 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: "MyFrontend",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173");
+            policy.AllowAnyHeader();
+        });
+});
+
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -46,6 +57,9 @@ app.Use(async (context, next) =>
 
 app.UseStaticFiles();
 app.UseRouting();
+
+app.UseCors("MyFrontend");
+
 
 app.UseAuthentication();
 app.UseAuthorization();
