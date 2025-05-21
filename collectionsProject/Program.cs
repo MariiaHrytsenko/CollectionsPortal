@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCors(options =>
@@ -29,7 +31,6 @@ builder.Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<DbFromExistingContext>()
     .AddDefaultTokenProviders();
 
-// Додати JWT, авторизацію і т.д. (це пізніше)
 
 builder.Services.AddControllersWithViews();
 
@@ -63,6 +64,9 @@ app.UseCors("MyFrontend");
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapControllers();
+
 
 app.MapControllerRoute(
     name: "default",
