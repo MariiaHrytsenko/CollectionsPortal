@@ -9,12 +9,13 @@ namespace collectionsProject.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AuthController : ControllerBase
+    public class AccountController : ControllerBase
     {
         private readonly DbFromExistingContext _context;
         private readonly string _jwtKey;
 
-        public AuthController(DbFromExistingContext context, IConfiguration config)
+
+        public AccountController(DbFromExistingContext context, IConfiguration config)
         {
             _context = context;
             _jwtKey = config["Jwt:Key"];
