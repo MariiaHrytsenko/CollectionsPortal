@@ -9,9 +9,9 @@ public partial class ModelCategory
 
     public string? NameCategory { get; set; }
 
-    public string? Iduser { get; set; }
+    public string Id { get; set; }
 
-    public virtual User? IduserNavigation { get; set; }
+    public virtual User? IdNavigation { get; set; }
 
     public virtual ICollection<ModelCharacteristic> Idcharacteristics { get; set; } = new List<ModelCharacteristic>();
 }

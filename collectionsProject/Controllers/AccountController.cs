@@ -30,6 +30,7 @@ namespace collectionsProject.Controllers
             var user = new User
             {
                 Email = dto.Email,
+                UserName = dto.UserName,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password)
             };
 
@@ -73,7 +74,9 @@ namespace collectionsProject.Controllers
     {
         public string Email { get; set; }
         public string Password { get; set; }
+        public string UserName { get; set; } 
     }
+
 
     // DTO для логіну
     public class LoginDto

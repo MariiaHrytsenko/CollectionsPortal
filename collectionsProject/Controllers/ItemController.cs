@@ -2,14 +2,19 @@
 using collectionsProject.Dto;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace collectionsProject.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize] 
     public class ItemController : ControllerBase
     {
         private readonly DbFromExistingContext _context;
+       // var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
 
         public ItemController(DbFromExistingContext context)
         {
@@ -20,7 +25,12 @@ namespace collectionsProject.Controllers
         [HttpGet]
         public async Task<ActionResult<List<ItemDto>>> GetItems()
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            // Вибираємо айтеми, які належать користувачу (припустимо, в Item є поле Id)
             var items = await _context.Items
+                .Where(i => i.Id == userId)
                 .Include(i => i.Chracteristics)
                 .ToListAsync();
 
@@ -43,9 +53,12 @@ namespace collectionsProject.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ItemDto>> GetItem(int id)
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
             var item = await _context.Items
                 .Include(i => i.Chracteristics)
-                .FirstOrDefaultAsync(i => i.Iditem == id);
+                .FirstOrDefaultAsync(i => i.Iditem == id && i.Id == userId);
 
             if (item == null) return NotFound();
 
@@ -68,10 +81,14 @@ namespace collectionsProject.Controllers
         [HttpPost]
         public async Task<ActionResult<ItemDto>> CreateItem([FromBody] ItemDto dto)
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
             var item = new Item
             {
                 NameItem = dto.NameItem,
-                PhotoItem = string.IsNullOrEmpty(dto.PhotoItem) ? null : Convert.FromBase64String(dto.PhotoItem)
+                PhotoItem = string.IsNullOrEmpty(dto.PhotoItem) ? null : Convert.FromBase64String(dto.PhotoItem),
+                Id = userId // записуємо власника
             };
 
             _context.Items.Add(item);
@@ -82,7 +99,7 @@ namespace collectionsProject.Controllers
             {
                 foreach (var chDto in dto.Chracteristics)
                 {
-                    var ch = new Chracteristic
+                    var ch = new Characteristic
                     {
                         Iditem = item.Iditem,
                         Value = chDto.Value
@@ -98,55 +115,83 @@ namespace collectionsProject.Controllers
         }
 
         // PUT: api/item/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateItem(int id, [FromBody] ItemDto dto)
+        // PUT: api/item/5
+[HttpPut("{id}")]
+public async Task<IActionResult> PutItem(int id, [FromBody] ItemDto itemDto)
+{
+    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    if (userId == null) return Unauthorized();
+
+    if (id != itemDto.Iditem)
+        return BadRequest("ID в URL та в тілі не співпадають.");
+
+    var existingItem = await _context.Items
+                            .Include(i => i.Chracteristics)
+                            .FirstOrDefaultAsync(i => i.Iditem == id && i.Id == userId); // <-- FIXED
+
+    if (existingItem == null)
+        return NotFound();
+
+    existingItem.NameItem = itemDto.NameItem;
+
+    // Обробляємо PhotoItem
+    if (!string.IsNullOrEmpty(itemDto.PhotoItem) && itemDto.PhotoItem.ToLower() != "null")
+    {
+        try
         {
-            var item = await _context.Items
-                .Include(i => i.Chracteristics)
-                .FirstOrDefaultAsync(i => i.Iditem == id);
-
-            if (item == null) return NotFound();
-
-            item.NameItem = dto.NameItem;
-            item.PhotoItem = string.IsNullOrEmpty(dto.PhotoItem) ? null : Convert.FromBase64String(dto.PhotoItem);
-
-            var dtoCharacteristicIds = dto.Chracteristics.Select(c => c.Idchracteristic).ToHashSet();
-
-            // Видаляємо характеристики, яких немає в DTO
-            var toRemove = item.Chracteristics.Where(c => !dtoCharacteristicIds.Contains(c.Idchracteristic)).ToList();
-            _context.Chracteristics.RemoveRange(toRemove);
-
-            // Оновлюємо або додаємо характеристики
-            foreach (var chDto in dto.Chracteristics)
-            {
-                var existing = item.Chracteristics.FirstOrDefault(c => c.Idchracteristic == chDto.Idchracteristic);
-                if (existing != null)
-                {
-                    existing.Value = chDto.Value;
-                }
-                else
-                {
-                    var newCh = new Chracteristic
-                    {
-                        Iditem = item.Iditem,
-                        Value = chDto.Value
-                    };
-                    _context.Chracteristics.Add(newCh);
-                }
-            }
-
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            existingItem.PhotoItem = Convert.FromBase64String(itemDto.PhotoItem);
         }
+        catch
+        {
+            return BadRequest("PhotoItem має бути Base64 рядком.");
+        }
+    }
+    else
+    {
+        existingItem.PhotoItem = null;
+    }
+
+    // Оновлюємо характеристики: видаляємо старі та додаємо нові
+    _context.Chracteristics.RemoveRange(existingItem.Chracteristics);
+    existingItem.Chracteristics.Clear();
+
+    foreach (var chrDto in itemDto.Chracteristics)
+    {
+        var characteristic = new Characteristic
+        {
+            Value = chrDto.Value,
+            Iditem = id
+        };
+        existingItem.Chracteristics.Add(characteristic);
+    }
+
+    try
+    {
+        await _context.SaveChangesAsync();
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, $"Помилка при збереженні: {ex.Message}");
+    }
+
+    return NoContent();
+}
+
 
         // DELETE: api/item/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteItem(int id)
         {
-            var item = await _context.Items.FindAsync(id);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            var item = await _context.Items
+                .Include(i => i.Chracteristics)
+                .FirstOrDefaultAsync(i => i.Iditem == id && i.Id == userId);
+
             if (item == null) return NotFound();
 
+            _context.Chracteristics.RemoveRange(item.Chracteristics);
             _context.Items.Remove(item);
             await _context.SaveChangesAsync();
 

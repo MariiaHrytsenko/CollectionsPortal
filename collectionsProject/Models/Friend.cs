@@ -5,13 +5,11 @@ namespace collectionsProject.Models;
 
 public partial class Friend
 {
-    public int Idfriendship { get; set; }
+    public int IDfriendship { get; set; }
 
-    public string? Idrequester { get; set; }
+    public string IDrequester { get; set; }
+    public User Requester { get; set; }
 
-    public string? Idreceiver { get; set; }
-
-    public virtual User? IdreceiverNavigation { get; set; }
-
-    public virtual User? IdrequesterNavigation { get; set; }
+    public string IDreceiver { get; set; }
+    public User Receiver { get; set; }
 }

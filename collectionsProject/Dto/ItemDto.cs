@@ -1,13 +1,17 @@
-﻿namespace collectionsProject.Dto
+﻿using collectionsProject.Models;
+
+namespace collectionsProject.Dto
 {
     public class ItemDto
     {
-        public int Iditem { get; set; }  // <- додай це поле
-
+        public int Iditem { get; set; }
         public string? NameItem { get; set; }
-        public string? PhotoItem { get; set; }  // Base64
+        public string? PhotoItem { get; set; }
 
-        public List<ChracteristicDto> Chracteristics { get; set; } = new();
+        public int? CategoryId { get; set; }
+        public string? CategoryName { get; set; }  // для відображення
+
+        public List<ChracteristicDto>? Chracteristics { get; set; }
     }
 
     public class ChracteristicDto

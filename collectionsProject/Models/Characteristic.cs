@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace collectionsProject.Models;
 
-public partial class Chracteristic
+public partial class Characteristic
 {
     public int Idchracteristic { get; set; }
 

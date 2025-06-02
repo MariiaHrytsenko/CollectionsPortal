@@ -1,22 +1,18 @@
-﻿using Microsoft.AspNetCore.Identity;
-using System;
+﻿// User.cs
+using Microsoft.AspNetCore.Identity;
 using System.Collections.Generic;
 
 namespace collectionsProject.Models;
 
 public partial class User : IdentityUser
 {
-    public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
 
-    public virtual ICollection<Friend> FriendIdreceiverNavigations { get; set; } = new List<Friend>();
+    public ICollection<Item> Items { get; set; } = new HashSet<Item>();
+    public ICollection<Comment> Comments { get; set; } = new HashSet<Comment>();
 
-    public virtual ICollection<Friend> FriendIdrequesterNavigations { get; set; } = new List<Friend>();
+    public ICollection<Friend> FriendsRequested { get; set; } = new HashSet<Friend>();
+    public ICollection<Friend> FriendsReceived { get; set; } = new HashSet<Friend>();
 
-    public virtual ICollection<Invitation> InvitationIdinviterNavigations { get; set; } = new List<Invitation>();
-
-    public virtual ICollection<Invitation> InvitationIdrequesterNavigations { get; set; } = new List<Invitation>();
-
-    public virtual ICollection<ModelCategory> ModelCategories { get; set; } = new List<ModelCategory>();
-
-    public virtual ICollection<ModelCharacteristic> ModelCharacteristics { get; set; } = new List<ModelCharacteristic>();
+    public ICollection<Invitation> InvitationsSent { get; set; } = new HashSet<Invitation>();
+    public ICollection<Invitation> InvitationsReceived { get; set; } = new HashSet<Invitation>();
 }

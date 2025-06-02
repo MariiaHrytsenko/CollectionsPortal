@@ -1,19 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
+﻿// Comment.cs
+using System;
 
 namespace collectionsProject.Models;
 
 public partial class Comment
 {
-    public int Idcomment { get; set; }
+    public int IDcomment { get; set; }
+    public int IDitem { get; set; }
+    public string IDcommentator { get; set; } // User.Id
 
-    public int? Iditem { get; set; }
+    public string Text { get; set; }
+    public DateTime? CreatedDate { get; set; }
 
-    public string? Idcommentator { get; set; }
-
-    public string? ContentComment { get; set; }
-
-    public virtual User? IdcommentatorNavigation { get; set; }
-
-    public virtual Item? IditemNavigation { get; set; }
+    public virtual Item Item { get; set; }
+    public virtual User Commentator { get; set; }
 }
