@@ -22,6 +22,8 @@ builder.Services.AddDbContext<OldDbContext>(options =>
 
 
 builder.Services.AddControllersWithViews();
+builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
+builder.Services.AddScoped<InvitationService>();
 
 var app = builder.Build();
 
@@ -58,6 +60,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+    /*
 using (var scope = app.Services.CreateScope())
 {
     var oldDb = scope.ServiceProvider.GetRequiredService<OldDbContext>();
@@ -69,5 +72,5 @@ using (var scope = app.Services.CreateScope())
     var migrator = new DataMigration(oldDb, newDb);
     migrator.RunAllMigrations();
 }
-
+*/
 app.Run();
