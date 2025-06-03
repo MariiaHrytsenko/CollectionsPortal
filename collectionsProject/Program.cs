@@ -20,7 +20,7 @@ builder.Services.AddDbContext<DbFromExistingContext>(options =>
 builder.Services.AddDbContext<OldDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("OldDefaultConnection")));
 
-
+//пошта
 builder.Services.AddControllersWithViews();
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 builder.Services.AddScoped<InvitationService>();

@@ -55,7 +55,6 @@ namespace collectionsProject.Controllers
 
             var items = await _context.Items
                 .Where(i => i.Id == friendId)
-                .Include(i => i.Chracteristics)
                 .ToListAsync();
 
             return Ok(items);

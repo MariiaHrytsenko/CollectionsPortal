@@ -1,17 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using collectionsProject.Models;
 
-namespace collectionsProject.Models;
-
-public partial class ModelCharacteristic
+public class ModelCharacteristic
 {
     public int Idcharacteristic { get; set; }
-
-    public string? NameCharacteristic { get; set; }
-
-    public string Id { get; set; }
+    public int Id { get; set; }
+    public string NameCharacteristic { get; set; }
 
     public virtual User? IdNavigation { get; set; }
 
-    public virtual ICollection<ModelCategory> Idcategories { get; set; } = new List<ModelCategory>();
+    public virtual ICollection<Characteristic> Characteristics { get; set; } = new List<Characteristic>();
+    public virtual ICollection<Category> Categories { get; set; } = new List<Category>();
 }

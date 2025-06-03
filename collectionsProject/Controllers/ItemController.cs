@@ -31,7 +31,7 @@ namespace collectionsProject.Controllers
             // Вибираємо айтеми, які належать користувачу (припустимо, в Item є поле Id)
             var items = await _context.Items
                 .Where(i => i.Id == userId)
-                .Include(i => i.Chracteristics)
+                .Include(i => i.Characteristics)
                 .ToListAsync();
 
             var dtos = items.Select(i => new ItemDto
@@ -39,7 +39,7 @@ namespace collectionsProject.Controllers
                 Iditem = i.Iditem,
                 NameItem = i.NameItem,
                 PhotoItem = i.PhotoItem == null ? null : Convert.ToBase64String(i.PhotoItem),
-                Chracteristics = i.Chracteristics.Select(c => new ChracteristicDto
+                Chracteristics = i.Characteristics.Select(c => new ChracteristicDto
                 {
                     Idchracteristic = c.Idchracteristic,
                     Value = c.Value
@@ -57,7 +57,7 @@ namespace collectionsProject.Controllers
             if (userId == null) return Unauthorized();
 
             var item = await _context.Items
-                .Include(i => i.Chracteristics)
+                .Include(i => i.Characteristics)
                 .FirstOrDefaultAsync(i => i.Iditem == id && i.Id == userId);
 
             if (item == null) return NotFound();
@@ -67,7 +67,7 @@ namespace collectionsProject.Controllers
                 Iditem = item.Iditem,
                 NameItem = item.NameItem,
                 PhotoItem = item.PhotoItem == null ? null : Convert.ToBase64String(item.PhotoItem),
-                Chracteristics = item.Chracteristics.Select(c => new ChracteristicDto
+                Chracteristics = item.Characteristics.Select(c => new ChracteristicDto
                 {
                     Idchracteristic = c.Idchracteristic,
                     Value = c.Value
@@ -126,7 +126,7 @@ public async Task<IActionResult> PutItem(int id, [FromBody] ItemDto itemDto)
         return BadRequest("ID в URL та в тілі не співпадають.");
 
     var existingItem = await _context.Items
-                            .Include(i => i.Chracteristics)
+                            .Include(i => i.Characteristics)
                             .FirstOrDefaultAsync(i => i.Iditem == id && i.Id == userId); // <-- FIXED
 
     if (existingItem == null)
@@ -152,8 +152,8 @@ public async Task<IActionResult> PutItem(int id, [FromBody] ItemDto itemDto)
     }
 
     // Оновлюємо характеристики: видаляємо старі та додаємо нові
-    _context.Chracteristics.RemoveRange(existingItem.Chracteristics);
-    existingItem.Chracteristics.Clear();
+    _context.Chracteristics.RemoveRange(existingItem.Characteristics);
+    existingItem.Characteristics.Clear();
 
     foreach (var chrDto in itemDto.Chracteristics)
     {
@@ -162,7 +162,7 @@ public async Task<IActionResult> PutItem(int id, [FromBody] ItemDto itemDto)
             Value = chrDto.Value,
             Iditem = id
         };
-        existingItem.Chracteristics.Add(characteristic);
+        existingItem.Characteristics.Add(characteristic);
     }
 
     try
@@ -186,12 +186,12 @@ public async Task<IActionResult> PutItem(int id, [FromBody] ItemDto itemDto)
             if (userId == null) return Unauthorized();
 
             var item = await _context.Items
-                .Include(i => i.Chracteristics)
+                .Include(i => i.Characteristics)
                 .FirstOrDefaultAsync(i => i.Iditem == id && i.Id == userId);
 
             if (item == null) return NotFound();
 
-            _context.Chracteristics.RemoveRange(item.Chracteristics);
+            _context.Chracteristics.RemoveRange(item.Characteristics);
             _context.Items.Remove(item);
             await _context.SaveChangesAsync();
 

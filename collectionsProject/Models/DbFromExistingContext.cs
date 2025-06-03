@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using collectionsProject.Models;
+using collectionsProject.OldModels;
 
 namespace collectionsProject.Models;
 
@@ -9,21 +11,27 @@ public partial class DbFromExistingContext : DbContext
     {
     }
 
+    // Users & Friends
     public virtual DbSet<User> Users { get; set; } = null!;
-    public virtual DbSet<Item> Items { get; set; } = null!;
-    public virtual DbSet<Characteristic> Chracteristics { get; set; } = null!;
-    public virtual DbSet<ModelCategory> ModelCategories { get; set; } = null!;
-    public virtual DbSet<ModelCharacteristic> ModelCharacteristics { get; set; } = null!;
     public virtual DbSet<Friend> Friends { get; set; } = null!;
     public virtual DbSet<Invitation> Invitations { get; set; } = null!;
+
+    // Collections
+    public virtual DbSet<Item> Items { get; set; } = null!;
     public virtual DbSet<Comment> Comments { get; set; } = null!;
+    public virtual DbSet<Characteristic> Chracteristics { get; set; } = null!;
+
+    // Categories & Characteristics models
+    public virtual DbSet<ModelCategory> ModelCategories { get; set; } = null!;
+    public virtual DbSet<ModelCharacteristic> ModelCharacteristics { get; set; } = null!;
+    public virtual DbSet<Category> Category { get; set; } = null!;
+
+    // EF migration lock
     public virtual DbSet<EfmigrationsLock> EfmigrationsLocks { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // User (якщо потрібно — додай налаштування для IdentityUser)
-
-        // Item
+        // === Item ===
         modelBuilder.Entity<Item>(entity =>
         {
             entity.HasKey(e => e.Iditem);
@@ -39,18 +47,24 @@ public partial class DbFromExistingContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Characteristic
+        // === Characteristic ===
         modelBuilder.Entity<Characteristic>(entity =>
         {
-            entity.HasKey(e => e.Idchracteristic);
+            entity.HasKey(e => new { e.Iditem, e.Idchracteristic });
 
             entity.HasOne(e => e.IditemNavigation)
-                  .WithMany(i => i.Chracteristics)
+                  .WithMany(i => i.Characteristics)
                   .HasForeignKey(e => e.Iditem)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.IdchracteristicNavigation)
+                  .WithMany(mc => mc.Characteristics)
+                  .HasForeignKey(e => e.Idchracteristic)
                   .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // ModelCategory
+
+        // === ModelCategory ===
         modelBuilder.Entity<ModelCategory>(entity =>
         {
             entity.HasKey(e => e.Idcategory);
@@ -61,7 +75,7 @@ public partial class DbFromExistingContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // ModelCharacteristic
+        // === ModelCharacteristic ===
         modelBuilder.Entity<ModelCharacteristic>(entity =>
         {
             entity.HasKey(e => e.Idcharacteristic);
@@ -72,25 +86,24 @@ public partial class DbFromExistingContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Many-to-Many: category (ModelCategory <-> ModelCharacteristic)
-        modelBuilder.Entity<ModelCategory>()
-            .HasMany(mc => mc.Idcharacteristics)
-            .WithMany(mc => mc.Idcategories)
-            .UsingEntity<Dictionary<string, object>>(
-                "category",
-                r => r.HasOne<ModelCharacteristic>()
-                      .WithMany()
-                      .HasForeignKey("Idcharacteristic"),
-                l => l.HasOne<ModelCategory>()
-                      .WithMany()
-                      .HasForeignKey("Idcategory"),
-                j =>
-                {
-                    j.HasKey("Idcategory", "Idcharacteristic");
-                    j.ToTable("category");
-                });
+        // === Category (many-to-many) ===
+modelBuilder.Entity<Category>(entity =>
+{
+    entity.HasKey(c => new { c.IDcategory, c.IDcharacteristic });
 
-        // Friend
+    entity.HasOne(c => c.ModelCategories)
+          .WithMany(mc => mc.Categories)
+          .HasForeignKey(c => c.IDcategory);
+
+    entity.HasOne(c => c.ModelCharacteristic)
+          .WithMany(mc => mc.Categories)
+          .HasForeignKey(c => c.IDcharacteristic);
+
+    entity.ToTable("category");
+});
+
+
+        // === Friend ===
         modelBuilder.Entity<Friend>(entity =>
         {
             entity.HasKey(e => e.IDfriendship);
@@ -106,7 +119,7 @@ public partial class DbFromExistingContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Invitation
+        // === Invitation ===
         modelBuilder.Entity<Invitation>(entity =>
         {
             entity.HasKey(e => e.IDinvitation);
@@ -122,7 +135,7 @@ public partial class DbFromExistingContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // Comment
+        // === Comment ===
         modelBuilder.Entity<Comment>(entity =>
         {
             entity.HasKey(e => e.IDcomment);
@@ -138,7 +151,7 @@ public partial class DbFromExistingContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // EfmigrationsLock
+        // === EF migrations ===
         modelBuilder.Entity<EfmigrationsLock>(entity =>
         {
             entity.HasKey(e => e.Id);

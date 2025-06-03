@@ -1,10 +1,17 @@
-﻿using collectionsProject.Models;
+﻿using collections;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace collectionsProject.Dto
+namespace collections.Application
 {
     public class CategoryDto
     {
-        public string? NameCategory { get; set; }
-        public ICollection<ModelCharacteristic> Idcharacteristics { get; set; } = new List<ModelCharacteristic>();
+        public int IDcategory { get; set; }
+        public string nameCategory { get; set; }
+        public string userID { get; set; }
+        public List<CharacteristicMenuDto> characteristics { get; set; }
     }
 }
