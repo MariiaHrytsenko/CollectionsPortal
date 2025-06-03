@@ -7,7 +7,7 @@ public partial class Comment
 {
     public int IDcomment { get; set; }
     public int IDitem { get; set; }
-    public string IDcommentator { get; set; } // User.Id
+    public string IDcommentator { get; set; } 
 
     public string Text { get; set; }
     public DateTime? CreatedDate { get; set; }

@@ -19,38 +19,40 @@ public class InvitationService
 
     public async Task<bool> SendInvitationAsync(string inviterId, string inviteeEmail)
     {
-        // Перевірити, чи email не належить самому собі
+        // Перевірити, чи запрошує сам себе
         var inviter = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == inviterId);
-        if (inviter == null) throw new Exception("Inviter not found");
+        if (inviter == null)
+            throw new Exception("Inviter not found");
 
         if (inviter.Email.Equals(inviteeEmail, StringComparison.OrdinalIgnoreCase))
             throw new Exception("You cannot invite yourself.");
 
-        // Створити токен (можна GUID)
-        var token = Guid.NewGuid().ToString();
-
-        // Перевірити, чи запрошення з таким email від цього користувача вже є
+        // Перевірити, чи вже існує запрошення
         var existingInvitation = await _dbContext.Invitations
             .FirstOrDefaultAsync(i => i.Email == inviteeEmail && i.IDinviter == inviterId);
 
         if (existingInvitation != null)
             throw new Exception("Invitation already sent.");
 
-        // Створити об'єкт Invitation
+        // Отримати користувача, якщо він уже зареєстрований
+        var userToInvite = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == inviteeEmail);
+
+        // Створити запрошення
         var invitation = new Invitation
         {
-            IDinviter = inviterId,
+            CreatedDate = DateTime.UtcNow,
             Email = inviteeEmail,
-            Token = token,
-            CreatedDate = DateTime.UtcNow
+            IDinviter = inviterId,
+            IDrequester = userToInvite?.Id, // якщо користувач існує — зберігаємо, якщо ні — залишаємо null
+            Token = Guid.NewGuid().ToString()
         };
 
-        // Додати в базу
+        // Додати в БД
         _dbContext.Invitations.Add(invitation);
         await _dbContext.SaveChangesAsync();
 
-        // Відправити лист
-        SendEmail(inviteeEmail, token);
+        // Відправити email
+        SendEmail(inviteeEmail, invitation.Token);
 
         return true;
     }
