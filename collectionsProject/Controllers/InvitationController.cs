@@ -11,8 +11,9 @@ using System.Security.Claims;
 namespace collectionsProject.Controllers
 {
     [ApiController]
+
     [Route("api/[controller]")]
-    [Authorize(AuthenticationSchemes= JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class InvitationsController : ControllerBase
     {
         private readonly DbFromExistingContext _context;
@@ -67,27 +68,27 @@ namespace collectionsProject.Controllers
         public async Task<IActionResult> AcceptInvitation([FromBody] AcceptInvitationDto dto)
         {
             try
-                { 
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-           
-            if (userId == null) return Unauthorized();
-
-            var invitation = await _context.Invitations
-                .FirstOrDefaultAsync(i => i.Token == dto.Token && i.IDrequester == userId);
-
-            if (invitation == null)
-                return NotFound("Запрошення не знайдено або не належить користувачу.");
-
-            var friendship = new Friend
             {
-                IDrequester = invitation.IDinviter,
-                IDreceiver = invitation.IDrequester
-            };
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            _context.Friends.Add(friendship);
-            _context.Invitations.Remove(invitation);
+                if (userId == null) return Unauthorized();
 
-            await _context.SaveChangesAsync();
+                var invitation = await _context.Invitations
+                    .FirstOrDefaultAsync(i => i.Token == dto.Token && i.IDrequester == userId);
+
+                if (invitation == null)
+                    return NotFound("Запрошення не знайдено або не належить користувачу.");
+
+                var friendship = new Friend
+                {
+                    IDrequester = invitation.IDinviter,
+                    IDreceiver = invitation.IDrequester
+                };
+
+                _context.Friends.Add(friendship);
+                _context.Invitations.Remove(invitation);
+
+                await _context.SaveChangesAsync();
             }
             catch (DbUpdateException dbEx)
             {

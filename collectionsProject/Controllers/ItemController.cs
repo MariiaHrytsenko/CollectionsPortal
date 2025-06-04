@@ -23,7 +23,7 @@ namespace collectionsProject.Controllers
         }
 
         // GET: api/item
-        [Authorize]
+        
         [HttpGet]
         public async Task<ActionResult<List<ItemDto>>> GetItems()
         {

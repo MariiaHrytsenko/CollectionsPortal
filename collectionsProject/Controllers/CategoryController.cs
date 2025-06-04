@@ -1,9 +1,9 @@
 ﻿using collections.Application;
 using collectionsProject.Dto;
-using collectionsProject.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using collectionsProject.Services;
 
 [Authorize]
 [ApiController]

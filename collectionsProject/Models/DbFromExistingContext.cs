@@ -18,6 +18,7 @@ public partial class DbFromExistingContext : DbContext
 
     // Collections
     public virtual DbSet<Item> Items { get; set; } = null!;
+    //public virtual DbSet<Characteristic> Chracteristics { get; set; } = null!;
     public virtual DbSet<Comment> Comments { get; set; } = null!;
     public virtual DbSet<Characteristic> Chracteristics { get; set; } = null!;
 

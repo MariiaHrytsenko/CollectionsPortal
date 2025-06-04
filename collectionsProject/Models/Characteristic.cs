@@ -17,3 +17,4 @@ public partial class Characteristic
     public virtual ModelCharacteristic IdchracteristicNavigation { get; set; } = null!;
 }
 
+
