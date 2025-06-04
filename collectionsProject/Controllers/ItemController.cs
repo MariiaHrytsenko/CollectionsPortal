@@ -14,7 +14,7 @@ namespace collectionsProject.Controllers
     public class ItemController : ControllerBase
     {
         private readonly DbFromExistingContext _context;
-       // var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        // var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
 
         public ItemController(DbFromExistingContext context)
@@ -23,6 +23,7 @@ namespace collectionsProject.Controllers
         }
 
         // GET: api/item
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<List<ItemDto>>> GetItems()
         {
@@ -117,66 +118,66 @@ namespace collectionsProject.Controllers
 
         // PUT: api/item/5
         // PUT: api/item/5
-[HttpPut("{id}")]
-public async Task<IActionResult> PutItem(int id, [FromBody] ItemDto itemDto)
-{
-    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-    if (userId == null) return Unauthorized();
-
-    if (id != itemDto.Iditem)
-        return BadRequest("ID в URL та в тілі не співпадають.");
-
-    var existingItem = await _context.Items
-                            .Include(i => i.Characteristics)
-                            .FirstOrDefaultAsync(i => i.Iditem == id && i.Id == userId); // <-- FIXED
-
-    if (existingItem == null)
-        return NotFound();
-
-    existingItem.NameItem = itemDto.NameItem;
-
-    // Обробляємо PhotoItem
-    if (!string.IsNullOrEmpty(itemDto.PhotoItem) && itemDto.PhotoItem.ToLower() != "null")
-    {
-        try
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutItem(int id, [FromBody] ItemDto itemDto)
         {
-            existingItem.PhotoItem = Convert.FromBase64String(itemDto.PhotoItem);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            if (id != itemDto.Iditem)
+                return BadRequest("ID в URL та в тілі не співпадають.");
+
+            var existingItem = await _context.Items
+                                    .Include(i => i.Characteristics)
+                                    .FirstOrDefaultAsync(i => i.Iditem == id && i.Id == userId); // <-- FIXED
+
+            if (existingItem == null)
+                return NotFound();
+
+            existingItem.NameItem = itemDto.NameItem;
+
+            // Обробляємо PhotoItem
+            if (!string.IsNullOrEmpty(itemDto.PhotoItem) && itemDto.PhotoItem.ToLower() != "null")
+            {
+                try
+                {
+                    existingItem.PhotoItem = Convert.FromBase64String(itemDto.PhotoItem);
+                }
+                catch
+                {
+                    return BadRequest("PhotoItem має бути Base64 рядком.");
+                }
+            }
+            else
+            {
+                existingItem.PhotoItem = null;
+            }
+
+            // Оновлюємо характеристики: видаляємо старі та додаємо нові
+            _context.Chracteristics.RemoveRange(existingItem.Characteristics);
+            existingItem.Characteristics.Clear();
+
+            foreach (var chrDto in itemDto.Chracteristics)
+            {
+                var characteristic = new Characteristic
+                {
+                    Value = chrDto.Value,
+                    Iditem = id
+                };
+                existingItem.Characteristics.Add(characteristic);
+            }
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Помилка при збереженні: {ex.Message}");
+            }
+
+            return NoContent();
         }
-        catch
-        {
-            return BadRequest("PhotoItem має бути Base64 рядком.");
-        }
-    }
-    else
-    {
-        existingItem.PhotoItem = null;
-    }
-
-    // Оновлюємо характеристики: видаляємо старі та додаємо нові
-    _context.Chracteristics.RemoveRange(existingItem.Characteristics);
-    existingItem.Characteristics.Clear();
-
-    foreach (var chrDto in itemDto.Chracteristics)
-    {
-        var characteristic = new Characteristic
-        {
-            Value = chrDto.Value,
-            Iditem = id
-        };
-        existingItem.Characteristics.Add(characteristic);
-    }
-
-    try
-    {
-        await _context.SaveChangesAsync();
-    }
-    catch (Exception ex)
-    {
-        return StatusCode(500, $"Помилка при збереженні: {ex.Message}");
-    }
-
-    return NoContent();
-}
 
 
         // DELETE: api/item/5

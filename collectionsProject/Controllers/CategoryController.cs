@@ -1,42 +1,59 @@
 ﻿using collections.Application;
+using collectionsProject.Dto;
 using collectionsProject.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class CategoriesController : ControllerBase
 {
-    private readonly ICategoryService _categoryService;
+    private readonly CategoryService _categoryService;
 
-    public CategoriesController(ICategoryService categoryService)
+    public CategoriesController(CategoryService categoryService)
     {
         _categoryService = categoryService;
     }
 
-    [HttpGet("{userId}")]
-    public async Task<IActionResult> GetCategoriesByUserId(string userId)
+    [HttpGet("user-categories")]
+    public async Task<ActionResult<List<CategoryWithCharacteristicsDto>>> GetUserCategories()
     {
-        var result = await _categoryService.GetCategoriesByUserIdAsync(userId);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+
+        var result = await _categoryService.GetUserCategoriesWithCharacteristicsAsync(userId);
         return Ok(result);
     }
-
-    [HttpGet("category/{categoryId}/items")]
-    public async Task<IActionResult> GetItemsByCategory(int categoryId)
+    [HttpPost("add")]
+    public async Task<IActionResult> AddCategory([FromBody] CreateCategoryDto dto)
     {
-        var items = await _categoryService.GetItemsByCategoryAsync(categoryId);
-        return Ok(items);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+
+        await _categoryService.AddCategoryAsync(userId, dto.NameCategory);
+        return Ok(new { message = "Category added successfully" });
     }
 
-    [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateCategoryDto dto)
+    [HttpPut("rename")]
+    public async Task<IActionResult> RenameCategory([FromBody] RenameCategoryDto dto)
     {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
 
-        var categoryId = await _categoryService.CreateCategoryAsync(dto);
-        return Ok(categoryId);
+        var result = await _categoryService.RenameCategoryAsync(userId, dto.Idcategory, dto.NewName);
+        return result ? Ok(new { message = "Category renamed" }) : NotFound(new { error = "Category not found or access denied" });
     }
 
+    [HttpDelete("delete")]
+    public async Task<IActionResult> DeleteCategory([FromBody] DeleteCategoryDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
 
+        var result = await _categoryService.DeleteCategoryAsync(userId, dto.Idcategory);
+        return result ? Ok(new { message = "Category deleted" }) : NotFound(new { error = "Category not found or access denied" });
+    }
 
 }

@@ -87,20 +87,21 @@ public partial class DbFromExistingContext : DbContext
         });
 
         // === Category (many-to-many) ===
-modelBuilder.Entity<Category>(entity =>
-{
-    entity.HasKey(c => new { c.IDcategory, c.IDcharacteristic });
 
-    entity.HasOne(c => c.ModelCategories)
-          .WithMany(mc => mc.Categories)
-          .HasForeignKey(c => c.IDcategory);
+        modelBuilder.Entity<Category>(entity =>
+        {
+            entity.HasKey(c => new { c.Idcategory, c.Idcharacteristic });
 
-    entity.HasOne(c => c.ModelCharacteristic)
-          .WithMany(mc => mc.Categories)
-          .HasForeignKey(c => c.IDcharacteristic);
+            entity.HasOne(c => c.ModelCategory)
+                  .WithMany(mc => mc.Categories)
+                  .HasForeignKey(c => c.Idcategory);
 
-    entity.ToTable("category");
-});
+            entity.HasOne(c => c.ModelCharacteristic)
+                  .WithMany(mc => mc.Categories)
+                  .HasForeignKey(c => c.Idcharacteristic);
+
+            entity.ToTable("category");
+        });
 
 
         // === Friend ===

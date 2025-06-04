@@ -76,10 +76,7 @@ namespace collectionsProject.Controllers
             var invitation = await _context.Invitations
                 .FirstOrDefaultAsync(i => i.Token == dto.Token && i.IDrequester == userId);
 
-            if (invitation == null)
-                return NotFound("Запрошення не знайдено або не належить користувачу.");
-
-            var friendship = new Friend
+                var friendship = new Friend
             {
                 IDrequester = invitation.IDinviter,
                 IDreceiver = invitation.IDrequester
