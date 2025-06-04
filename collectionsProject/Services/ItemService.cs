@@ -1,9 +1,10 @@
-﻿using collectionsProject.Models;
+﻿using collections.Application;
+using collectionsProject.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Threading.Tasks;
 
-namespace collections.Application
+namespace collectionsProject.Services
 {
     public class ItemService : IItemService
     {

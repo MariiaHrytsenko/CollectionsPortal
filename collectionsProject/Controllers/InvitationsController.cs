@@ -1,5 +1,8 @@
 ﻿using collectionsProject.Dto;
 using collectionsProject.Models;
+using collectionsProject.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,8 +11,9 @@ using System.Security.Claims;
 namespace collectionsProject.Controllers
 {
     [ApiController]
+
     [Route("api/[controller]")]
-  //  [Authorize]
+    [Authorize(AuthenticationSchemes= JwtBearerDefaults.AuthenticationScheme)]
     public class InvitationsController : ControllerBase
     {
         private readonly DbFromExistingContext _context;
@@ -22,13 +26,21 @@ namespace collectionsProject.Controllers
         }
 
         // POST: api/invitations/send
+
         [HttpPost("send")]
+
         public async Task<IActionResult> SendInvitation([FromBody] SendInvitationRequest request)
         {
             try
             {
                 var success = await _invitationService.SendInvitationAsync(request.InviterId, request.Email);
                 return success ? Ok("Invitation sent") : BadRequest("Failed to send invitation");
+            }
+            catch (DbUpdateException dbEx)
+            {
+                // Тут можна покласти докладніший лог
+                var sqlErr = dbEx.InnerException?.Message ?? dbEx.Message;
+                return BadRequest($"Database error: {sqlErr}");
             }
             catch (Exception ex)
             {
@@ -55,7 +67,10 @@ namespace collectionsProject.Controllers
         [HttpPost("accept")]
         public async Task<IActionResult> AcceptInvitation([FromBody] AcceptInvitationDto dto)
         {
+            try
+                { 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+           
             if (userId == null) return Unauthorized();
 
             var invitation = await _context.Invitations
@@ -74,7 +89,18 @@ namespace collectionsProject.Controllers
             _context.Invitations.Remove(invitation);
 
             await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException dbEx)
+            {
+                // Яка саме сутність викликала помилку?
+                foreach (var entry in dbEx.Entries)
+                {
+                    Console.WriteLine($"Entity: {entry.Entity.GetType().Name}, State: {entry.State}");
+                }
 
+                var detailed = dbEx.InnerException?.Message ?? dbEx.Message;
+                return BadRequest($"Database error: {detailed}");
+            }
             return Ok("Запрошення прийнято.");
         }
     }

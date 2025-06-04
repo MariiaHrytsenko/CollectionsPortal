@@ -1,11 +1,11 @@
-﻿using collections;
+﻿using collections.Application;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace collections.Application
+namespace collectionsProject.Services
 {
     public interface ICategoryService
     {

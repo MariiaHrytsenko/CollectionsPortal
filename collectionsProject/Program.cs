@@ -1,9 +1,13 @@
 ﻿using collectionsProject.Migrations;
 using collectionsProject.Models;
-using collectionsProject.OldModels;
-
+//using collectionsProject.OldModels;
+using collectionsProject.Services;
+using collectionsProject.Settings;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,13 +16,49 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+
+// ������ Authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings.Issuer,
+        ValidAudience = jwtSettings.Audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+builder.Services.AddAuthorization();
+builder.Services.AddScoped<JwtService>();
+
 // Підключення до нової БД
 builder.Services.AddDbContext<DbFromExistingContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Підключення до старої БД (OldDbContext має бути від DbContext!)
-builder.Services.AddDbContext<OldDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("OldDefaultConnection")));
+
+//builder.services.adddbcontext<olddbcontext>(options =>
+//    options.usesqlite(builder.configuration.getconnectionstring("olddefaultconnection")));
+
+
+
+builder.Services.AddIdentity<User, IdentityRole>(options =>
+{
+    options.User.RequireUniqueEmail = true;
+}).AddEntityFrameworkStores<DbFromExistingContext>()
+    .AddDefaultTokenProviders();
 
 //пошта
 builder.Services.AddControllersWithViews();
@@ -36,10 +76,14 @@ if (!app.Environment.IsDevelopment())
 app.Use(async (context, next) =>
 {
     var token = context.Request.Cookies["jwtToken"];
+
+
     if (!string.IsNullOrEmpty(token))
     {
         context.Request.Headers.Append("Authorization", "Bearer " + token);
+        Console.WriteLine("Authorization header set: " + context.Request.Headers["Authorization"]);
     }
+
     await next();
 });
 
@@ -48,7 +92,6 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
 
 app.MapControllerRoute(
     name: "default",
@@ -60,17 +103,19 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-    /*
+
+app.MapControllers();
+/*
 using (var scope = app.Services.CreateScope())
 {
-    var oldDb = scope.ServiceProvider.GetRequiredService<OldDbContext>();
-    var newDb = scope.ServiceProvider.GetRequiredService<DbFromExistingContext>();
+var oldDb = scope.ServiceProvider.GetRequiredService<OldDbContext>();
+var newDb = scope.ServiceProvider.GetRequiredService<DbFromExistingContext>();
 
-    oldDb.Database.Migrate();
-    newDb.Database.Migrate();
+oldDb.Database.Migrate();
+newDb.Database.Migrate();
 
-    var migrator = new DataMigration(oldDb, newDb);
-    migrator.RunAllMigrations();
+var migrator = new DataMigration(oldDb, newDb);
+migrator.RunAllMigrations();
 }
 */
 app.Run();
