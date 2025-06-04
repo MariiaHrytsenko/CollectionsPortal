@@ -3,12 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace collectionsProject.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class FriendsController : ControllerBase
     {
         private readonly DbFromExistingContext _context;
@@ -28,14 +29,11 @@ namespace collectionsProject.Controllers
             var friends = await _context.Friends
                 .Include(f => f.Requester)
                 .Include(f => f.Receiver)
-                .Where(f => f.IDrequester == userId || f.IDreceiver == userId)
+                .Where(f => f.IDrequester == userId || f.IDreceiver == userId).Select(f =>
+                f.IDrequester == userId ? f.Receiver : f.Requester)
                 .ToListAsync();
 
-            var friendUsers = friends.Select(f =>
-                f.IDrequester == userId ? f.Receiver : f.Requester
-            );
-
-            return Ok(friendUsers);
+            return Ok(friends);
         }
 
         // GET: api/friends/{friendId}/items

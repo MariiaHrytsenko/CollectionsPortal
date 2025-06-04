@@ -4,6 +4,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using collectionsProject.Models;
+using collectionsProject.Services;
+using Microsoft.AspNetCore.Identity;
+using collectionsProject.Settings;
 
 namespace collectionsProject.Controllers
 {
@@ -12,13 +15,17 @@ namespace collectionsProject.Controllers
     public class AccountController : ControllerBase
     {
         private readonly DbFromExistingContext _context;
-        private readonly string _jwtKey;
+        private readonly JwtService _jwtService;
+        private readonly UserManager<User> _userManager;
+        private readonly SignInManager<User> _signInManager;
 
-
-        public AccountController(DbFromExistingContext context, IConfiguration config)
+        public AccountController(SignInManager<User> signInManager, UserManager<User> userManager, JwtService jwtService, DbFromExistingContext context)
         {
-            _context = context;
-            _jwtKey = config["Jwt:Key"];
+            this._context = context;
+            this._signInManager = signInManager;
+            this._userManager = userManager;
+            this._jwtService = jwtService;
+
         }
 
         [HttpPost("register")]
@@ -34,8 +41,10 @@ namespace collectionsProject.Controllers
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password)
             };
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            var res = await _userManager.CreateAsync(user, dto.Password);
+            //await _context.SaveChangesAsync();
+            if (!res.Succeeded)
+                return BadRequest();
 
             return Ok("Registered successfully");
         }
@@ -43,29 +52,28 @@ namespace collectionsProject.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
-            var user = _context.Users.SingleOrDefault(u => u.Email == dto.Email);
-
-            if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
-                return Unauthorized("Invalid credentials");
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_jwtKey);
-
-            var tokenDescriptor = new SecurityTokenDescriptor
+            var user = await _userManager.FindByEmailAsync(dto.Email);
+            if (user == null)
             {
-                Subject = new ClaimsIdentity(new[]
-                {
-                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new Claim(ClaimTypes.Email, user.Email)
-                }),
-                Expires = DateTime.UtcNow.AddHours(1),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            };
+                return Unauthorized(new { message = "Неправильний логін або пароль" });
+            }
 
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            var tokenString = tokenHandler.WriteToken(token);
+            var res = await _signInManager.CheckPasswordSignInAsync(user, dto.Password, false);
+            if (!res.Succeeded)
+            {
+                return Unauthorized(new { message = "Неправильний логін або пароль" });
+            }
 
-            return Ok(new { Token = tokenString });
+            var token = _jwtService.GenerateToken(user.Id, user.Email, user.UserName);
+            Response.Cookies.Append("jwtToken", token, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddHours(1)
+            });
+
+            return Ok(new { token = token });
         }
     }
 
