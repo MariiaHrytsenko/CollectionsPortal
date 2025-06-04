@@ -31,6 +31,8 @@ public partial class DbFromExistingContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+
+
         // === Item ===
         modelBuilder.Entity<Item>(entity =>
         {
@@ -75,6 +77,16 @@ public partial class DbFromExistingContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
         });
 
+        modelBuilder.Entity<Category>()
+        .HasOne(c => c.ModelCategory)
+        .WithMany()
+        .HasForeignKey(c => c.Idcategory);
+
+        modelBuilder.Entity<Category>()
+            .HasOne(c => c.ModelCharacteristic)
+            .WithMany()
+            .HasForeignKey(c => c.Idcharacteristic);
+
         // === ModelCharacteristic ===
         modelBuilder.Entity<ModelCharacteristic>(entity =>
         {
@@ -89,15 +101,15 @@ public partial class DbFromExistingContext : DbContext
         // === Category (many-to-many) ===
 modelBuilder.Entity<Category>(entity =>
 {
-    entity.HasKey(c => new { c.IDcategory, c.IDcharacteristic });
+    entity.HasKey(c => new { c.Idcategory, c.Idcharacteristic });
 
-    entity.HasOne(c => c.ModelCategories)
+    entity.HasOne(c => c.ModelCategory)
           .WithMany(mc => mc.Categories)
-          .HasForeignKey(c => c.IDcategory);
+          .HasForeignKey(c => c.Idcategory);
 
     entity.HasOne(c => c.ModelCharacteristic)
           .WithMany(mc => mc.Categories)
-          .HasForeignKey(c => c.IDcharacteristic);
+          .HasForeignKey(c => c.Idcharacteristic);
 
     entity.ToTable("category");
 });

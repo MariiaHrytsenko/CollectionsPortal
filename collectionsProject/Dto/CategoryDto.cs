@@ -14,4 +14,21 @@ namespace collections.Application
         public string userID { get; set; }
         public List<CharacteristicMenuDto> characteristics { get; set; }
     }
+
+    public class CreateCategoryDto
+    {
+        public string NameCategory { get; set; }
+    }
+
+    public class RenameCategoryDto
+    {
+        public int Idcategory { get; set; }
+        public string NewName { get; set; }
+    }
+
+    public class DeleteCategoryDto
+    {
+        public int Idcategory { get; set; }
+    }
+
 }
