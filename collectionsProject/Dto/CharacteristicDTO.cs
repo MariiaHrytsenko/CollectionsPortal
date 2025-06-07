@@ -13,4 +13,20 @@
         public List<CharacteristicDto> Characteristics { get; set; } = new();
     }
 
+    public class CreateCharacteristicDto
+    {
+        public string NameCharacteristic { get; set; }
+    }
+
+    public class UpdateCharacteristicDto
+    {
+        public int Idcharacteristic { get; set; }
+        public string NewName { get; set; }
+    }
+    public class AssignCharacteristicDto
+    {
+        public int Idcategory { get; set; }
+        public int Idcharacteristic { get; set; }
+    }
+
 }

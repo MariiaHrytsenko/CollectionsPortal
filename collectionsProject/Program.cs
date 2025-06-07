@@ -64,6 +64,9 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 builder.Services.AddControllersWithViews();
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 builder.Services.AddScoped<InvitationService>();
+builder.Services.AddScoped<CategoryService>();
+builder.Services.AddScoped<CharacteristicService>();
+builder.Services.AddScoped<ItemService>();
 
 var app = builder.Build();
 
