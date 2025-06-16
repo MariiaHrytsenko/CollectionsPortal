@@ -63,6 +63,41 @@ namespace collectionsProject.Controllers
             return Ok(items);
         }
 
+        [HttpGet("category/{id}")]
+        public async Task<ActionResult<List<ItemDto>>> GetItemsBycategory(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            // Вибираємо айтеми, які належать користувачу (припустимо, в Item є поле Id)
+            var items = await _context.Items
+                .Where(i => i.Id == userId && i.CategoryId == id)
+                .Select(i => new ItemDto
+                {
+                    Iditem = i.Iditem,
+                    NameItem = i.NameItem,
+                    PhotoItem = i.PhotoItem == null ? null : Convert.ToBase64String(i.PhotoItem),
+                    CategoryId = i.CategoryId,
+                    Chracteristics = _context.Chracteristics
+                    .Where(c => c.Iditem == i.Iditem)
+                .Join(_context.ModelCharacteristics,
+                  c => c.Idchracteristic,
+                  mc => mc.Idcharacteristic,
+                  (c, mc) => new ChracteristicDto
+                  {
+                      Idchracteristic = mc.Idcharacteristic,
+                      NameCharacteristic = mc.NameCharacteristic,
+                      Value = c.Value
+                  })
+                .ToList()
+                })
+
+                .ToListAsync();
+
+
+            return Ok(items);
+        }
+
         // GET: api/item/5
         [HttpGet("{id}")]
         public async Task<ActionResult<ItemDto>> GetItem(int id)
@@ -168,7 +203,7 @@ namespace collectionsProject.Controllers
                                     .Include(i => i.Characteristics)
                                     .FirstOrDefaultAsync(i => i.Iditem == id && i.Id == userId); // <-- FIXED
 
-            Console.WriteLine(existingItem);
+           // Console.WriteLine(existingItem);
             
             if (existingItem == null)
                 return NotFound();
