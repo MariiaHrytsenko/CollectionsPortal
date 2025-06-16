@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿/*using Microsoft.EntityFrameworkCore;
 using collectionsProject.OldModels;
 
 namespace collectionsProject.OldModels
@@ -160,3 +160,4 @@ namespace collectionsProject.OldModels
         }
     }
 }
+*/

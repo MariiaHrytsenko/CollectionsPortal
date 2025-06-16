@@ -10,7 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-
+// важливе! в базі данних прибери Characteritics -> Idcharacteristic -> PK (primary key)
 // Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

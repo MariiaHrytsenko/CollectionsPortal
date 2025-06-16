@@ -29,4 +29,12 @@
         public int Idcharacteristic { get; set; }
     }
 
+    public class AddCharOfItem
+    {
+       
+        public int Idchracteristic { get; set; }
+
+        public string? Value { get; set; }
+    }
+
 }

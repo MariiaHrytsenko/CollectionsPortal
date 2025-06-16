@@ -3,7 +3,7 @@ using System;
 
 namespace collectionsProject.Models;
 
-public partial class Comment
+public class Comment
 {
     public int IDcomment { get; set; }
     public int IDitem { get; set; }
@@ -12,6 +12,6 @@ public partial class Comment
     public string Text { get; set; }
     public DateTime? CreatedDate { get; set; }
 
-    public virtual Item Item { get; set; }
+   // public virtual Item Item { get; set; }
     public virtual User Commentator { get; set; }
 }

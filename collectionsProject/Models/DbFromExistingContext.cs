@@ -141,10 +141,10 @@ public partial class DbFromExistingContext : DbContext
         {
             entity.HasKey(e => e.IDcomment);
 
-            entity.HasOne(c => c.Item)
+            /*entity.HasOne(c => c.Item)
                   .WithMany(i => i.Comments)
                   .HasForeignKey(c => c.IDitem)
-                  .OnDelete(DeleteBehavior.Cascade);
+                  .OnDelete(DeleteBehavior.Cascade);*/
 
             entity.HasOne(c => c.Commentator)
                   .WithMany(u => u.Comments)

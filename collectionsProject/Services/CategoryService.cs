@@ -12,7 +12,7 @@ namespace collectionsProject.Services
         {
             _context = context;
         }
-
+        //Get
         public async Task<List<CategoryWithCharacteristicsDto>> GetUserCategoriesWithCharacteristicsAsync(string userId)
         {
             // Get categories for the user
@@ -40,7 +40,7 @@ namespace collectionsProject.Services
             return result;
         }
 
-
+        //Add (post)
         public async Task<bool> AddCategoryAsync(string userId, string nameCategory)
         {
             var category = new ModelCategory
@@ -53,7 +53,7 @@ namespace collectionsProject.Services
             await _context.SaveChangesAsync();
             return true;
         }
-
+        //Renape (put)
         public async Task<bool> RenameCategoryAsync(string userId, int idcategory, string newName)
         {
             var category = await _context.ModelCategories
@@ -65,7 +65,7 @@ namespace collectionsProject.Services
             await _context.SaveChangesAsync();
             return true;
         }
-
+        //Delete
         public async Task<bool> DeleteCategoryAsync(string userId, int idcategory)
         {
             // Find the category
