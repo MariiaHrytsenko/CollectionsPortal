@@ -38,15 +38,15 @@ export default function Navbar() {
       <ul style={styles.navLinks}>
         <li style={styles.navItem}>
           <Link
-            to="/bikelist"
+            to="/categories"
             style={{
               ...styles.link,
-              ...(hovered === "BikeList" ? styles.linkHover : {}),
+              ...(hovered === "CatList" ? styles.linkHover : {}),
             }}
-            onMouseEnter={() => setHovered("BikeList")}
+            onMouseEnter={() => setHovered("CatList")}
             onMouseLeave={() => setHovered(null)}
           >
-            Bike List
+            Categories List
           </Link>
         </li>
 

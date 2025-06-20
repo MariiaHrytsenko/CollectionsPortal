@@ -6,7 +6,6 @@ import AppRouter from "./components/AppRouter";
 
 
 function App() {
-  localStorage.setItem("API_URL", "http://localhost:7281/api");
   return (
       <Router>
       <div className="flex flex-col min-h-screen bg-gray-100">

@@ -67,6 +67,17 @@ builder.Services.AddScoped<InvitationService>();
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<CharacteristicService>();
 builder.Services.AddScoped<ItemService>();
+//should remove later???
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials(); // for cookies
+    });
+});
 
 var app = builder.Build();
 
@@ -90,6 +101,8 @@ app.Use(async (context, next) =>
     await next();
 });
 
+
+app.UseCors("AllowFrontend");
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
