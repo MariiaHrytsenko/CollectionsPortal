@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 
 namespace collectionsProject.Controllers
 {
@@ -228,7 +227,7 @@ namespace collectionsProject.Controllers
             {
                 existingItem.PhotoItem = null;
             }*/
-            if (itemDto.PhotoItem.IsNullOrEmpty())
+            if (itemDto.PhotoItem =="" || itemDto.PhotoItem == null)
             {
                 existingItem.PhotoItem = [];
             }
