@@ -1,4 +1,4 @@
-import React, { useState , useEffect } from "react";
+import { useState , useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 
@@ -48,6 +48,18 @@ export default function Navbar() {
           >
             Categories List
           </Link>
+          <Link
+            to="/test"
+            style={{
+              ...styles.link,
+              ...(hovered === "test" ? styles.linkHover : {}),
+            }}
+            onMouseEnter={() => setHovered("test")}
+            onMouseLeave={() => setHovered(null)}
+          >
+            Dev Test
+          </Link>
+
         </li>
 
         

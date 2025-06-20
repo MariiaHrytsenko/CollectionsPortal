@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import config from "../AppConfig.json"
-
+import { exportCategoriesToPDF } from "./Exports";
 
 interface category {
     idcategory: number,
@@ -17,6 +17,7 @@ interface category {
 
 //const API_URL = localStorage.getItem("API_URL");
 const API_URL = config.API_URL;
+
 
 const CatList = () => {
   const [cats, setCategories] = useState<category[]>([]);
@@ -121,7 +122,11 @@ const CatList = () => {
           <p className="no-results">No categories match your filters.</p>
         )}
       </div>
+      <button onClick={() => exportCategoriesToPDF(filteredCategories)} className="export-button">
+      Export this to PDF
+    </button>
     </div>
+    
   );
 };
 
