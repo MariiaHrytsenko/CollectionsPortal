@@ -15,7 +15,6 @@ interface category {
     ]
   }
 
-//const API_URL = localStorage.getItem("API_URL");
 const API_URL = config.API_URL;
 
 
@@ -28,7 +27,6 @@ const CatList = () => {
 
   
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [selectedAvailability, setSelectedAvailability] = useState<string>("All");
 
   useEffect(() => {
     axios
@@ -43,25 +41,20 @@ const CatList = () => {
         setLoading(false);
       });
   }, []);
-/*
+
   // filtration
   useEffect(() => {
     let filtered = cats;
 
-    if (selectedAvailability !== "All") {
-      const isAvailable = selectedAvailability === "Available";
-      filtered = filtered.filter((cat) => cat.availableCat === isAvailable);
-    }
 
     if (searchQuery) {
       filtered = filtered.filter((cat) =>
-        cat.nameModel.toLowerCase().includes(searchQuery.toLowerCase())
+        cat.nameCategory.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    setFilteredCats(filtered);
-  }, [searchQuery, selectedAvailability, cats]);*/
-
+    setFilteredCategories(filtered);
+  }, [searchQuery, cats])
   if (loading) return <p className="loading-message">Loading categories...</p>;
   if (error) return <p className="error-message">{error}</p>;
 
@@ -79,19 +72,12 @@ const CatList = () => {
           className="search-input"
         />
 
-        <select
-          value={selectedAvailability}
-          onChange={(e) => setSelectedAvailability(e.target.value)}
-          className="filter-select"
-        >
-          <option value="All">All Availability</option>
-          <option value="Available">Available</option>
-          <option value="Not Available">Not Available</option>
-        </select>
+        
       </div>
 
       {/*category grid */}
       <div className="cat-grid">
+        <button className="create-category-button" onClick={() => console.log("placeholder-create-category")}>New</button>
         {filteredCategories.length > 0 ? (
           filteredCategories.map((cat) => (
             <div key={cat.idcategory} className="cat-id">
@@ -122,6 +108,7 @@ const CatList = () => {
           <p className="no-results">No categories match your filters.</p>
         )}
       </div>
+      <br/><br/>
       <button onClick={() => exportCategoriesToPDF(filteredCategories)} className="export-button">
       Export this to PDF
     </button>

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 namespace collectionsProject.Controllers
 {
@@ -227,7 +228,14 @@ namespace collectionsProject.Controllers
             {
                 existingItem.PhotoItem = null;
             }*/
-            existingItem.PhotoItem = Convert.FromBase64String(itemDto.PhotoItem);
+            if (itemDto.PhotoItem.IsNullOrEmpty())
+            {
+                existingItem.PhotoItem = [];
+            }
+            else
+            {
+                existingItem.PhotoItem = Convert.FromBase64String(itemDto.PhotoItem);
+            }
             // Оновлюємо характеристики: видаляємо старі та додаємо нові
             //TODO check for correct characteristics
             _context.Chracteristics.RemoveRange(existingItem.Characteristics);
