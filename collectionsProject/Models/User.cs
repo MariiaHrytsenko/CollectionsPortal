@@ -6,6 +6,7 @@ namespace collectionsProject.Models;
 
 public partial class User : IdentityUser
 {
+    public byte[]? Avatar { get; set; }
 
     public ICollection<Item> Items { get; set; } = new HashSet<Item>();
     public ICollection<Comment> Comments { get; set; } = new HashSet<Comment>();

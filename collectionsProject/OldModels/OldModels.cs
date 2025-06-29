@@ -1,5 +1,5 @@
 ﻿namespace collectionsProject.OldModels
-{
+{/*
     public class ModelCategory
     {
         public int IDcategory { get; set; }
@@ -39,7 +39,7 @@
         public ModelCharacteristic? ModelCharacteristic { get; set; }
         public Item? Item { get; set; }
     }
-
+    /*
     public class Comment
     {
         public int IDcomment { get; set; }
@@ -73,7 +73,7 @@
         public User? Inviter { get; set; }
         public User? Requester { get; set; }
     }
-
+    
     public class Item
     {
         public int IDitem { get; set; }
@@ -96,5 +96,5 @@
         public ICollection<Friend>? FriendsReceiving { get; set; }
         public ICollection<Invitation>? InvitationsInvited { get; set; }
         public ICollection<Invitation>? InvitationsRequested { get; set; }
-    }
+    }*/
 }

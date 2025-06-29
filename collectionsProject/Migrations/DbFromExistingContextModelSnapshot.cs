@@ -44,7 +44,27 @@ namespace collectionsProject.Migrations
                     b.ToTable("Items");
                 });
 
-            modelBuilder.Entity("category", b =>
+            modelBuilder.Entity("ModelCharacteristic", b =>
+                {
+                    b.Property<int>("Idcharacteristic")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NameCharacteristic")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Idcharacteristic");
+
+                    b.HasIndex("Id");
+
+                    b.ToTable("ModelCharacteristics");
+                });
+
+            modelBuilder.Entity("collectionsProject.Models.Category", b =>
                 {
                     b.Property<int>("Idcategory")
                         .HasColumnType("INTEGER");
@@ -61,19 +81,18 @@ namespace collectionsProject.Migrations
 
             modelBuilder.Entity("collectionsProject.Models.Characteristic", b =>
                 {
-                    b.Property<int>("Idchracteristic")
-                        .ValueGeneratedOnAdd()
+                    b.Property<int>("Iditem")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("Iditem")
+                    b.Property<int>("Idchracteristic")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Value")
                         .HasColumnType("TEXT");
 
-                    b.HasKey("Idchracteristic");
+                    b.HasKey("Iditem", "Idchracteristic");
 
-                    b.HasIndex("Iditem");
+                    b.HasIndex("Idchracteristic");
 
                     b.ToTable("Chracteristics");
                 });
@@ -102,8 +121,6 @@ namespace collectionsProject.Migrations
 
                     b.HasIndex("IDcommentator");
 
-                    b.HasIndex("IDitem");
-
                     b.ToTable("Comments");
                 });
 
@@ -124,7 +141,7 @@ namespace collectionsProject.Migrations
 
             modelBuilder.Entity("collectionsProject.Models.Friend", b =>
                 {
-                    b.Property<int>("IDfriendship")
+                    b.Property<long>("IDfriendship")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
@@ -189,6 +206,7 @@ namespace collectionsProject.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("NameCategory")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Idcategory");
@@ -196,25 +214,6 @@ namespace collectionsProject.Migrations
                     b.HasIndex("Id");
 
                     b.ToTable("ModelCategories");
-                });
-
-            modelBuilder.Entity("collectionsProject.Models.ModelCharacteristic", b =>
-                {
-                    b.Property<int>("Idcharacteristic")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Id")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("NameCharacteristic")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Idcharacteristic");
-
-                    b.HasIndex("Id");
-
-                    b.ToTable("ModelCharacteristics");
                 });
 
             modelBuilder.Entity("collectionsProject.Models.User", b =>
@@ -225,11 +224,13 @@ namespace collectionsProject.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("INTEGER");
 
+                    b.Property<byte[]>("Avatar")
+                        .HasColumnType("BLOB");
+
                     b.Property<string>("ConcurrencyStamp")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Email")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("EmailConfirmed")
@@ -263,7 +264,6 @@ namespace collectionsProject.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("UserName")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
@@ -288,27 +288,50 @@ namespace collectionsProject.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("category", b =>
+            modelBuilder.Entity("ModelCharacteristic", b =>
                 {
-                    b.HasOne("collectionsProject.Models.ModelCategory", null)
+                    b.HasOne("collectionsProject.Models.User", "IdNavigation")
                         .WithMany()
+                        .HasForeignKey("Id")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("IdNavigation");
+                });
+
+            modelBuilder.Entity("collectionsProject.Models.Category", b =>
+                {
+                    b.HasOne("collectionsProject.Models.ModelCategory", "ModelCategory")
+                        .WithMany("Categories")
                         .HasForeignKey("Idcategory")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("collectionsProject.Models.ModelCharacteristic", null)
-                        .WithMany()
+                    b.HasOne("ModelCharacteristic", "ModelCharacteristic")
+                        .WithMany("Categories")
                         .HasForeignKey("Idcharacteristic")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("ModelCategory");
+
+                    b.Navigation("ModelCharacteristic");
                 });
 
             modelBuilder.Entity("collectionsProject.Models.Characteristic", b =>
                 {
+                    b.HasOne("ModelCharacteristic", "IdchracteristicNavigation")
+                        .WithMany("Characteristics")
+                        .HasForeignKey("Idchracteristic")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Item", "IditemNavigation")
-                        .WithMany("Chracteristics")
+                        .WithMany("Characteristics")
                         .HasForeignKey("Iditem")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("IdchracteristicNavigation");
 
                     b.Navigation("IditemNavigation");
                 });
@@ -321,15 +344,7 @@ namespace collectionsProject.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Item", "Item")
-                        .WithMany("Comments")
-                        .HasForeignKey("IDitem")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Commentator");
-
-                    b.Navigation("Item");
                 });
 
             modelBuilder.Entity("collectionsProject.Models.Friend", b =>
@@ -380,21 +395,21 @@ namespace collectionsProject.Migrations
                     b.Navigation("IdNavigation");
                 });
 
-            modelBuilder.Entity("collectionsProject.Models.ModelCharacteristic", b =>
-                {
-                    b.HasOne("collectionsProject.Models.User", "IdNavigation")
-                        .WithMany()
-                        .HasForeignKey("Id")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.Navigation("IdNavigation");
-                });
-
             modelBuilder.Entity("Item", b =>
                 {
-                    b.Navigation("Chracteristics");
+                    b.Navigation("Characteristics");
+                });
 
-                    b.Navigation("Comments");
+            modelBuilder.Entity("ModelCharacteristic", b =>
+                {
+                    b.Navigation("Categories");
+
+                    b.Navigation("Characteristics");
+                });
+
+            modelBuilder.Entity("collectionsProject.Models.ModelCategory", b =>
+                {
+                    b.Navigation("Categories");
                 });
 
             modelBuilder.Entity("collectionsProject.Models.User", b =>

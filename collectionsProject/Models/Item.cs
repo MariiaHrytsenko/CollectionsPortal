@@ -13,7 +13,7 @@ public partial class Item
     public int? CategoryId { get; set; }
     public virtual ModelCategory? Category { get; set; }
 
-    public virtual ICollection<Comment> Comments { get; set; } = new HashSet<Comment>();
+    //public virtual ICollection<Comment> Comments { get; set; } = new HashSet<Comment>();
     public virtual ICollection<Characteristic> Characteristics { get; set; } = new List<Characteristic>();
 
     public virtual User? User { get; set; } // Навігаційна властивість

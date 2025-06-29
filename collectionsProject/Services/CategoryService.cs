@@ -12,7 +12,7 @@ namespace collectionsProject.Services
         {
             _context = context;
         }
-
+        //Get
         public async Task<List<CategoryWithCharacteristicsDto>> GetUserCategoriesWithCharacteristicsAsync(string userId)
         {
             // Get categories for the user
@@ -40,7 +40,7 @@ namespace collectionsProject.Services
             return result;
         }
 
-
+        //Add (post)
         public async Task<bool> AddCategoryAsync(string userId, string nameCategory)
         {
             var category = new ModelCategory
@@ -53,7 +53,7 @@ namespace collectionsProject.Services
             await _context.SaveChangesAsync();
             return true;
         }
-
+        //Renape (put)
         public async Task<bool> RenameCategoryAsync(string userId, int idcategory, string newName)
         {
             var category = await _context.ModelCategories
@@ -65,18 +65,46 @@ namespace collectionsProject.Services
             await _context.SaveChangesAsync();
             return true;
         }
-
+        //Delete
         public async Task<bool> DeleteCategoryAsync(string userId, int idcategory)
         {
+            // Find the category
             var category = await _context.ModelCategories
                 .FirstOrDefaultAsync(c => c.Idcategory == idcategory && c.Id == userId);
 
             if (category == null) return false;
 
+            // Get all items in that category owned by the user
+            var itemsToDelete = await _context.Items
+                .Where(i => i.CategoryId == idcategory && i.Id == userId)
+                .ToListAsync();
+
+            if (itemsToDelete.Any())
+            {
+                var itemIds = itemsToDelete.Select(i => i.Iditem).ToList();
+
+                // Delete related comments
+                var comments = _context.Comments
+                    .Where(c => itemIds.Contains(c.IDitem));
+                _context.Comments.RemoveRange(comments);
+
+                // Delete related characteristics
+                var characteristics = _context.Chracteristics
+                    .Where(ch => itemIds.Contains(ch.Iditem));
+                _context.Chracteristics.RemoveRange(characteristics);
+
+                // Delete the items themselves
+                _context.Items.RemoveRange(itemsToDelete);
+            }
+
+            // Delete the category
             _context.ModelCategories.Remove(category);
+
+            // Save all changes
             await _context.SaveChangesAsync();
             return true;
         }
     }
 }
+
 

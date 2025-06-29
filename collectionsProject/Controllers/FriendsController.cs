@@ -21,7 +21,7 @@ namespace collectionsProject.Controllers
 
         // GET: api/friends
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetFriends()
+        public async Task<ActionResult<IEnumerable<FriendDto>>> GetFriends()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized();
@@ -29,12 +29,25 @@ namespace collectionsProject.Controllers
             var friends = await _context.Friends
                 .Include(f => f.Requester)
                 .Include(f => f.Receiver)
-                .Where(f => f.IDrequester == userId || f.IDreceiver == userId).Select(f =>
-                f.IDrequester == userId ? f.Receiver : f.Requester)
+                .Where(f => f.IDrequester == userId || f.IDreceiver == userId)
                 .ToListAsync();
 
-            return Ok(friends);
+            var result = friends.Select(f =>
+            {
+                var friendUser = f.IDrequester == userId ? f.Receiver : f.Requester;
+                return new FriendDto
+                {
+                    Id = friendUser.Id,
+                    UserName = friendUser.UserName,
+                    Email = friendUser.Email,
+                    AvatarBase64 = friendUser.Avatar != null ? Convert.ToBase64String(friendUser.Avatar) : null,
+                    Status = "Accepted" // або f.Status якщо поле є
+                };
+            });
+
+            return Ok(result);
         }
+
 
         // GET: api/friends/{friendId}/items
         [HttpGet("{friendId}/items")]
@@ -58,4 +71,14 @@ namespace collectionsProject.Controllers
             return Ok(items);
         }
     }
+}
+
+
+public class FriendDto
+{
+    public string Id { get; set; }
+    public string UserName { get; set; }
+    public string Email { get; set; }
+    public string? AvatarBase64 { get; set; }
+    public string? Status { get; set; }  
 }

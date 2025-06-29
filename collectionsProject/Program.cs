@@ -10,7 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
-
+// важливе! в базі данних прибери Characteritics -> Idcharacteristic -> PK (primary key)
 // Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -64,6 +64,20 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 builder.Services.AddControllersWithViews();
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 builder.Services.AddScoped<InvitationService>();
+builder.Services.AddScoped<CategoryService>();
+builder.Services.AddScoped<CharacteristicService>();
+builder.Services.AddScoped<ItemService>();
+//should remove later???
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials(); // for cookies
+    });
+});
 
 var app = builder.Build();
 
@@ -87,6 +101,8 @@ app.Use(async (context, next) =>
     await next();
 });
 
+
+app.UseCors("AllowFrontend");
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
@@ -118,4 +134,12 @@ var migrator = new DataMigration(oldDb, newDb);
 migrator.RunAllMigrations();
 }
 */
-app.Run();
+try
+{
+    app.Run();
+}
+catch (Exception ex)
+{
+    Console.WriteLine("FATAL ERROR:");
+    Console.WriteLine(ex.ToString());
+}

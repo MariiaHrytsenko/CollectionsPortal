@@ -13,6 +13,11 @@ namespace collectionsProject.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class ItemController : ControllerBase
     {
+        //this SHOULD be in appconfig, but i want to make it Just Work, so here it goes!
+        private const int MaxItemsInDB = 32000; //can be up to 64bit sighned int -> 1,844674407×10^19
+        private Random rnd = new Random();
+        
+
         private readonly DbFromExistingContext _context;
         // var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -23,7 +28,6 @@ namespace collectionsProject.Controllers
         }
 
         // GET: api/item
-        [Authorize]
         [HttpGet]
         public async Task<ActionResult<List<ItemDto>>> GetItems()
         {
@@ -33,22 +37,65 @@ namespace collectionsProject.Controllers
             // Вибираємо айтеми, які належать користувачу (припустимо, в Item є поле Id)
             var items = await _context.Items
                 .Where(i => i.Id == userId)
-                .Include(i => i.Characteristics)
+                .Select(i => new ItemDto
+                {
+                    Iditem = i.Iditem,
+                    NameItem = i.NameItem,
+                    PhotoItem = i.PhotoItem == null ? null : Convert.ToBase64String(i.PhotoItem),
+                    CategoryId = i.CategoryId,
+                    Chracteristics = _context.Chracteristics
+                    .Where(c => c.Iditem == i.Iditem)
+                .Join(_context.ModelCharacteristics,
+                  c => c.Idchracteristic,
+                  mc => mc.Idcharacteristic,
+                  (c, mc) => new ChracteristicDto
+                  {
+                      Idchracteristic = mc.Idcharacteristic,
+                      NameCharacteristic = mc.NameCharacteristic,
+                      Value = c.Value
+                  })
+                .ToList()
+                })
+
+                .ToListAsync();
+          
+
+            return Ok(items);
+        }
+
+        [HttpGet("category/{id}")]
+        public async Task<ActionResult<List<ItemDto>>> GetItemsBycategory(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Unauthorized();
+
+            // Вибираємо айтеми, які належать користувачу (припустимо, в Item є поле Id)
+            var items = await _context.Items
+                .Where(i => i.Id == userId && i.CategoryId == id)
+                .Select(i => new ItemDto
+                {
+                    Iditem = i.Iditem,
+                    NameItem = i.NameItem,
+                    PhotoItem = i.PhotoItem == null ? null : Convert.ToBase64String(i.PhotoItem),
+                    CategoryId = i.CategoryId,
+                    Chracteristics = _context.Chracteristics
+                    .Where(c => c.Iditem == i.Iditem)
+                .Join(_context.ModelCharacteristics,
+                  c => c.Idchracteristic,
+                  mc => mc.Idcharacteristic,
+                  (c, mc) => new ChracteristicDto
+                  {
+                      Idchracteristic = mc.Idcharacteristic,
+                      NameCharacteristic = mc.NameCharacteristic,
+                      Value = c.Value
+                  })
+                .ToList()
+                })
+
                 .ToListAsync();
 
-            var dtos = items.Select(i => new ItemDto
-            {
-                Iditem = i.Iditem,
-                NameItem = i.NameItem,
-                PhotoItem = i.PhotoItem == null ? null : Convert.ToBase64String(i.PhotoItem),
-                Chracteristics = i.Characteristics.Select(c => new ChracteristicDto
-                {
-                    Idchracteristic = c.Idchracteristic,
-                    Value = c.Value
-                }).ToList()
-            }).ToList();
 
-            return Ok(dtos);
+            return Ok(items);
         }
 
         // GET: api/item/5
@@ -59,7 +106,6 @@ namespace collectionsProject.Controllers
             if (userId == null) return Unauthorized();
 
             var item = await _context.Items
-                .Include(i => i.Characteristics)
                 .FirstOrDefaultAsync(i => i.Iditem == id && i.Id == userId);
 
             if (item == null) return NotFound();
@@ -69,28 +115,52 @@ namespace collectionsProject.Controllers
                 Iditem = item.Iditem,
                 NameItem = item.NameItem,
                 PhotoItem = item.PhotoItem == null ? null : Convert.ToBase64String(item.PhotoItem),
-                Chracteristics = item.Characteristics.Select(c => new ChracteristicDto
-                {
-                    Idchracteristic = c.Idchracteristic,
-                    Value = c.Value
-                }).ToList()
+                CategoryId = item.CategoryId,
+                Chracteristics = _context.Chracteristics
+                    .Where(c => c.Iditem == item.Iditem)
+                .Join(_context.ModelCharacteristics,
+                  c => c.Idchracteristic,
+                  mc => mc.Idcharacteristic,
+                  (c, mc) => new ChracteristicDto
+                  {
+                      Idchracteristic = mc.Idcharacteristic,
+                      NameCharacteristic = mc.NameCharacteristic,
+                      Value = c.Value
+                  })
+                .ToList()
             };
 
             return Ok(dto);
         }
 
-        // POST: api/item
+        // POST: add
         [HttpPost]
-        public async Task<ActionResult<ItemDto>> CreateItem([FromBody] ItemDto dto)
+        public async Task<ActionResult<ItemAdd>> CreateItem([FromBody] ItemAdd dto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized();
+            bool itemExists = false;
+            int round = 0;
+            int newItemId;
+            const short maxRounds = 20; //TODO should move to config
+            do
+            {
+                if (round > maxRounds) return BadRequest("Loop detected. too many items in DB. try again"); //TODO this is NOT a Bad Request (400)! this is Loop Detected (508) or at least 500
+                round++;
+                newItemId = rnd.Next(1, MaxItemsInDB);
+                var existingItem = await _context.Items
+                    .FirstOrDefaultAsync(i => i.Iditem == newItemId);
+                if (existingItem != null) { itemExists = true; }
+                
+            } while (itemExists == true);
 
             var item = new Item
             {
+                Iditem = newItemId,
                 NameItem = dto.NameItem,
                 PhotoItem = string.IsNullOrEmpty(dto.PhotoItem) ? null : Convert.FromBase64String(dto.PhotoItem),
-                Id = userId // записуємо власника
+                CategoryId = dto.CategoryId,
+                Id = userId
             };
 
             _context.Items.Add(item);
@@ -101,9 +171,11 @@ namespace collectionsProject.Controllers
             {
                 foreach (var chDto in dto.Chracteristics)
                 {
+                    //TODO: Add check for correct characteristics
                     var ch = new Characteristic
                     {
-                        Iditem = item.Iditem,
+                        Iditem = newItemId,
+                        Idchracteristic = chDto.Idchracteristic,
                         Value = chDto.Value
                     };
                     _context.Chracteristics.Add(ch);
@@ -111,31 +183,34 @@ namespace collectionsProject.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            dto.Iditem = item.Iditem;
+            //dto.Iditem = item.Iditem;
 
-            return CreatedAtAction(nameof(GetItem), new { id = item.Iditem }, dto);
+            return CreatedAtAction(nameof(GetItem), new { id = newItemId}, dto);
         }
 
         // PUT: api/item/5
-        // PUT: api/item/5
+        // Change intem
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutItem(int id, [FromBody] ItemDto itemDto)
+        public async Task<IActionResult> PutItem(int id, [FromBody] ItemChange itemDto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized();
 
             if (id != itemDto.Iditem)
-                return BadRequest("ID в URL та в тілі не співпадають.");
+                return BadRequest("ID in URL and Body mismatch.");
 
             var existingItem = await _context.Items
                                     .Include(i => i.Characteristics)
                                     .FirstOrDefaultAsync(i => i.Iditem == id && i.Id == userId); // <-- FIXED
 
+           // Console.WriteLine(existingItem);
+            
             if (existingItem == null)
                 return NotFound();
 
             existingItem.NameItem = itemDto.NameItem;
 
+            /*
             // Обробляємо PhotoItem
             if (!string.IsNullOrEmpty(itemDto.PhotoItem) && itemDto.PhotoItem.ToLower() != "null")
             {
@@ -151,9 +226,17 @@ namespace collectionsProject.Controllers
             else
             {
                 existingItem.PhotoItem = null;
+            }*/
+            if (itemDto.PhotoItem =="" || itemDto.PhotoItem == null)
+            {
+                existingItem.PhotoItem = [];
             }
-
+            else
+            {
+                existingItem.PhotoItem = Convert.FromBase64String(itemDto.PhotoItem);
+            }
             // Оновлюємо характеристики: видаляємо старі та додаємо нові
+            //TODO check for correct characteristics
             _context.Chracteristics.RemoveRange(existingItem.Characteristics);
             existingItem.Characteristics.Clear();
 
@@ -161,22 +244,23 @@ namespace collectionsProject.Controllers
             {
                 var characteristic = new Characteristic
                 {
-                    Value = chrDto.Value,
-                    Iditem = id
+                    Iditem = itemDto.Iditem,
+                    Idchracteristic = chrDto.Idchracteristic,
+                    Value = chrDto.Value
                 };
                 existingItem.Characteristics.Add(characteristic);
             }
-
+            //TODO add those everywhere!!!
             try
             {
                 await _context.SaveChangesAsync();
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Помилка при збереженні: {ex.Message}");
+                return StatusCode(500, $"Error while saving: {ex.Message}");
             }
 
-            return NoContent();
+            return Ok();
         }
 
 
@@ -195,9 +279,16 @@ namespace collectionsProject.Controllers
 
             _context.Chracteristics.RemoveRange(item.Characteristics);
             _context.Items.Remove(item);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error while saving: {ex.Message}");
+            }
 
-            return NoContent();
+            return Ok();
         }
     }
 }

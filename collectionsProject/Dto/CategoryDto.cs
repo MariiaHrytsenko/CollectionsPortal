@@ -15,10 +15,10 @@ namespace collections.Application
         public List<CharacteristicMenuDto> characteristics { get; set; }
     }
 
-    //public class CreateCategoryDto
-    //{
-    //    public string NameCategory { get; set; }
-    //}
+    public class CreateCategoryDto
+    {
+        public string NameCategory { get; set; }
+    }
 
     public class RenameCategoryDto
     {
