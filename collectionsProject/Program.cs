@@ -134,4 +134,12 @@ var migrator = new DataMigration(oldDb, newDb);
 migrator.RunAllMigrations();
 }
 */
-app.Run();
+try
+{
+    app.Run();
+}
+catch (Exception ex)
+{
+    Console.WriteLine("FATAL ERROR:");
+    Console.WriteLine(ex.ToString());
+}
