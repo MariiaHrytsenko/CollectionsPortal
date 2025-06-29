@@ -1,114 +1,222 @@
-import { useState , useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useLanguage } from "../LanguageContext";
 
-
+const translations = {
+  en: {
+    home: "Home",
+    categories: "Categories",
+    createCategory: "Create Category",
+    allItems: "All Items",
+    createItem: "Create Item",
+    profile: "Profile",
+    friends: "Friends",
+    catList: "CatList",
+    logout: "Logout",
+    login: "Login",
+    lang: "Polski",
+    portal: "Collection Portal",
+  },
+  pl: {
+    home: "Strona główna",
+    categories: "Kategorie",
+    createCategory: "Utwórz kategorię",
+    allItems: "Wszystkie przedmioty",
+    createItem: "Dodaj przedmiot",
+    profile: "Profil",
+    friends: "Znajomi",
+    catList: "Lista kategorii",
+    logout: "Wyloguj",
+    login: "Zaloguj",
+    lang: "English",
+    portal: "Portal Kolekcji",
+  },
+};
 
 export default function Navbar() {
   const [hovered, setHovered] = useState<string | null>(null);
   const navigate = useNavigate();
- // const user= localStorage.getItem()
- const [userId, setUserId] = useState<string | null>(null);
- useEffect(() => {
-  const storedUserId = localStorage.getItem("userId");
-  if (storedUserId) {
-    setUserId(storedUserId);
-  }
-}, []);
+  const [userId, setUserId] = useState<string | null>(null);
+  const { lang, setLang } = useLanguage();
+  const t = translations[lang];
+
+  // Force re-render on language change
+  const [_, setForce] = useState(0);
+  useEffect(() => {
+    setForce((f) => f + 1);
+  }, [lang]);
+
+  useEffect(() => {
+    const storedUserId = localStorage.getItem("userId");
+    if (storedUserId) {
+      setUserId(storedUserId);
+    }
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("userId")
+    localStorage.removeItem("userId");
     setUserId(null);
-    navigate("/");
+    navigate("/login");
   };
 
   return (
     <nav style={styles.navbar}>
-      <Link
-            to="/"
-            style={{
-              ...styles.link,
-             
-            }}
-          >
-            <h1 style={styles.title}>Collection Portal</h1>
-            
-          </Link>
-      
+      <Link to="/" style={styles.titleLink}>
+        <h1 style={styles.title}>{t.portal}</h1>
+      </Link>
       <ul style={styles.navLinks}>
-        <li style={styles.navItem}>
-          <Link
-            to="/categories"
-            style={{
-              ...styles.link,
-              ...(hovered === "CatList" ? styles.linkHover : {}),
-            }}
-            onMouseEnter={() => setHovered("CatList")}
-            onMouseLeave={() => setHovered(null)}
-          >
-            Categories List
-          </Link>
-          <Link
-            to="/test"
-            style={{
-              ...styles.link,
-              ...(hovered === "test" ? styles.linkHover : {}),
-            }}
-            onMouseEnter={() => setHovered("test")}
-            onMouseLeave={() => setHovered(null)}
-          >
-            Dev Test
-          </Link>
-
-        </li>
-
-        
- {!userId && (
+        {userId ? (
           <>
+            <li style={styles.navItem}>
+              <Link
+                to="/"
+                style={{
+                  ...styles.link,
+                  ...(hovered === "home" ? styles.linkHover : {}),
+                }}
+                onMouseEnter={() => setHovered("home")}
+                onMouseLeave={() => setHovered(null)}
+              >
+                {t.home}
+              </Link>
+            </li>
+            <li style={styles.navItem}>
+              <Link
+                to="/categories"
+                style={{
+                  ...styles.link,
+                  ...(hovered === "categories" ? styles.linkHover : {}),
+                }}
+                onMouseEnter={() => setHovered("categories")}
+                onMouseLeave={() => setHovered(null)}
+              >
+                {t.categories}
+              </Link>
+            </li>
+            <li style={styles.navItem}>
+              <Link
+                to="/categories/create"
+                style={{
+                  ...styles.link,
+                  ...(hovered === "createCategory" ? styles.linkHover : {}),
+                }}
+                onMouseEnter={() => setHovered("createCategory")}
+                onMouseLeave={() => setHovered(null)}
+              >
+                {t.createCategory}
+              </Link>
+            </li>
+            <li style={styles.navItem}>
+              <Link
+                to="/items"
+                style={{
+                  ...styles.link,
+                  ...(hovered === "allItems" ? styles.linkHover : {}),
+                }}
+                onMouseEnter={() => setHovered("allItems")}
+                onMouseLeave={() => setHovered(null)}
+              >
+                {t.allItems}
+              </Link>
+            </li>
+            <li style={styles.navItem}>
+              <Link
+                to="/items/create"
+                style={{
+                  ...styles.link,
+                  ...(hovered === "createItem" ? styles.linkHover : {}),
+                }}
+                onMouseEnter={() => setHovered("createItem")}
+                onMouseLeave={() => setHovered(null)}
+              >
+                {t.createItem}
+              </Link>
+            </li>
+            <li style={styles.navItem}>
+              <Link
+                to="/profile"
+                style={{
+                  ...styles.link,
+                  ...(hovered === "profile" ? styles.linkHover : {}),
+                }}
+                onMouseEnter={() => setHovered("profile")}
+                onMouseLeave={() => setHovered(null)}
+              >
+                {t.profile}
+              </Link>
+            </li>
+            <li style={styles.navItem}>
+              <Link
+                to="/friends"
+                style={{
+                  ...styles.link,
+                  ...(hovered === "friends" ? styles.linkHover : {}),
+                }}
+                onMouseEnter={() => setHovered("friends")}
+                onMouseLeave={() => setHovered(null)}
+              >
+                {t.friends}
+              </Link>
+            </li>
+            <li style={styles.navItem}>
+              <Link
+                to="/catlist"
+                style={{
+                  ...styles.link,
+                  ...(hovered === "catList" ? styles.linkHover : {}),
+                }}
+                onMouseEnter={() => setHovered("catList")}
+                onMouseLeave={() => setHovered(null)}
+              >
+                {t.catList}
+              </Link>
+            </li>
+            <li style={styles.navItem}>
+              <button
+                onClick={handleLogout}
+                style={{
+                  ...styles.link,
+                  backgroundColor: "#dc3545",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                {t.logout}
+              </button>
+            </li>
+          </>
+        ) : (
+          <>
+            <li style={styles.navItem}>
+              <Link
+                to="/login"
+                style={{
+                  ...styles.link,
+                  ...(hovered === "login" ? styles.linkHover : {}),
+                }}
+                onMouseEnter={() => setHovered("login")}
+                onMouseLeave={() => setHovered(null)}
+              >
+                {t.login}
+              </Link>
+            </li>
+          </>
+        )}
         <li style={styles.navItem}>
-          <Link
-            to="/login"
+          <button
+            onClick={() => setLang(lang === "en" ? "pl" : "en")}
             style={{
               ...styles.link,
-              ...(hovered === "Login" ? styles.linkHover : {}),
+              backgroundColor: "#f6f8fa",
+              color: "#007bff",
+              border: "1px solid #007bff",
+              marginLeft: 8,
             }}
-            onMouseEnter={() => setHovered("Login")}
-            onMouseLeave={() => setHovered(null)}
           >
-            Login
-          </Link>
+            {t.lang}
+          </button>
         </li>
-        <li style={styles.navItem}>
-          <Link
-            to="/register"
-            style={{
-              ...styles.link,
-              ...(hovered === "Register" ? styles.linkHover : {}),
-            }}
-            onMouseEnter={() => setHovered("Register")}
-            onMouseLeave={() => setHovered(null)}
-          >
-            Register
-          </Link>
-        </li>
-        </>
-        )}
-        {userId && (
-          <li style={styles.navItem}>
-            <button
-              onClick={handleLogout}
-              style={{
-                ...styles.link,
-                backgroundColor: "#dc3545", // Red color for logout
-                border: "none",
-                cursor: "pointer",
-              }}
-            >
-              Logout
-            </button>
-          </li>
-        )}
-        
       </ul>
     </nav>
   );
@@ -124,11 +232,14 @@ const styles = {
     color: "#fff",
     boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
   },
+  titleLink: {
+    textDecoration: "none",
+    color: "inherit",
+  },
   title: {
     margin: 0,
     fontSize: "22px",
     fontWeight: "bold",
-    color: "#fff",
   },
   navLinks: {
     listStyleType: "none",

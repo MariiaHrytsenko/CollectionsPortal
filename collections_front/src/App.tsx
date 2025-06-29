@@ -1,21 +1,18 @@
-import React from 'react';
-import './App.css';
-import { BrowserRouter as Router } from "react-router-dom";
-import Navbar from "./components/Navbar";
+import React from "react";
+import { BrowserRouter } from "react-router-dom";
 import AppRouter from "./components/AppRouter";
+import Navbar from "./components/Navbar";
+import { LanguageProvider } from "./LanguageContext";
 
-
-function App() {
+const App = () => {
   return (
-      <Router>
-      <div className="flex flex-col min-h-screen bg-gray-100">
+    <LanguageProvider>
+      <BrowserRouter>
         <Navbar />
-        <main className="container mx-auto p-4 flex-grow">
-          <AppRouter />
-        </main>
-      </div>
-    </Router>
+        <AppRouter />
+      </BrowserRouter>
+    </LanguageProvider>
   );
-}
+};
 
 export default App;
