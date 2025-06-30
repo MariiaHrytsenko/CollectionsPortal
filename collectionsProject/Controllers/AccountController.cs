@@ -30,8 +30,10 @@ namespace collectionsProject.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
-            if (_context.Users.Any(u => u.Email == dto.Email))
+            if (_context.Users.Any(u => u.Email.ToLower() == dto.Email.ToLower()))
                 return BadRequest("Email already exists");
+            if (_context.Users.Any(u => u.UserName.ToLower() == dto.UserName.ToLower()))
+                return BadRequest("Username already exists");
 
             byte[]? avatarBytes = null;
             if (!string.IsNullOrEmpty(dto.AvatarBase64))
@@ -143,11 +145,9 @@ namespace collectionsProject.Controllers
             return Ok("Profile updated");
         }
 
-
-
         [HttpGet("check-unique")]
         public IActionResult CheckUnique([FromQuery] string field, [FromQuery] string value)
-     {
+        {
             if (string.IsNullOrWhiteSpace(field) || string.IsNullOrWhiteSpace(value))
                 return BadRequest("Field and value are required");
 
@@ -161,6 +161,7 @@ namespace collectionsProject.Controllers
 
             return Ok(new { isUnique });
         }
+
         // DTO для реєстрації
         public class RegisterDto
         {
