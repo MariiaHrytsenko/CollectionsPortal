@@ -28,6 +28,16 @@ public class CategoriesController : ControllerBase
         var result = await _categoryService.GetUserCategoriesWithCharacteristicsAsync(userId);
         return Ok(result);
     }
+    [HttpGet("{id}")]
+    public async Task<ActionResult<List<CategoryWithCharacteristicsDto>>> GetUserCategoryId(int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+
+        var result = await _categoryService.GetUserCategoryWithCharacteristicsAsync(userId, id);
+        return Ok(result);
+    }
+
     [HttpPost("add")]
     public async Task<IActionResult> AddCategory([FromBody] CreateCategoryDto dto)
     {
