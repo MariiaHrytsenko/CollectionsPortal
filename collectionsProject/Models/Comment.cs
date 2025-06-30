@@ -1,17 +1,16 @@
-﻿// Comment.cs
-using System;
+﻿using System;
 
-namespace collectionsProject.Models;
-
-public class Comment
+namespace collectionsProject.Models
 {
-    public int IDcomment { get; set; }
-    public int IDitem { get; set; }
-    public string IDcommentator { get; set; } 
+    public class Comment
+    {
+        public int IDcomment { get; set; }
+        public int IDitem { get; set; }
+        public string IDcommentator { get; set; } = null!;
+        public DateTime CreatedDate { get; set; }
+        public string Text { get; set; } = null!;
 
-    public string Text { get; set; }
-    public DateTime? CreatedDate { get; set; }
-
-   // public virtual Item Item { get; set; }
-    public virtual User Commentator { get; set; }
+        public virtual User Commentator { get; set; } = null!;
+    }
 }
+

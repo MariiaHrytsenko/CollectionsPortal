@@ -40,6 +40,33 @@ namespace collectionsProject.Services
             return result;
         }
 
+        public async Task<List<CategoryWithCharacteristicsDto>> GetUserCategoryWithCharacteristicsAsync(string userId, int id)
+        {
+            // Get categories for the user
+            var result = await _context.ModelCategories
+            .Where(mc => mc.Id == userId && mc.Idcategory == id)
+            .Select(mc => new CategoryWithCharacteristicsDto
+            {
+                Idcategory = mc.Idcategory,
+                NameCategory = mc.NameCategory,
+                Characteristics = _context.Category
+                .Where(c => c.Idcategory == mc.Idcategory)
+                .Join(_context.ModelCharacteristics,
+                  c => c.Idcharacteristic,
+                  mc2 => mc2.Idcharacteristic,
+                  (c, mc2) => new CharacteristicDto
+                  {
+                      Idcharacteristic = mc2.Idcharacteristic,
+                      NameCharacteristic = mc2.NameCharacteristic
+                  })
+                .ToList()
+            })
+            .ToListAsync();
+
+
+            return result;
+        }
+
         //Add (post)
         public async Task<bool> AddCategoryAsync(string userId, string nameCategory)
         {

@@ -1,6 +1,5 @@
 ﻿using collectionsProject.Dto;
 using collectionsProject.Models;
-using collectionsProject.OldModels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,13 +8,11 @@ using System.Security.Claims;
 
 namespace collectionsProject.Controllers
 {
-    
-        [Route("api/[controller]")]
-        [ApiController]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public class CommentController : ControllerBase
+    [Route("api/[controller]")]
+    [ApiController]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    public class CommentController : ControllerBase
     {
-
         private readonly DbFromExistingContext _context;
 
         public CommentController(DbFromExistingContext context)
@@ -23,9 +20,9 @@ namespace collectionsProject.Controllers
             _context = context;
         }
 
-        //create
+        // Create
         [HttpPost]
-        public async Task<ActionResult<CommentAdd>> Createcomment([FromBody] CommentAdd dto)
+        public async Task<ActionResult> Createcomment([FromBody] CommentAdd dto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized();
@@ -34,19 +31,17 @@ namespace collectionsProject.Controllers
             {
                 IDitem = dto.IDitem,
                 IDcommentator = userId,
-                CreatedDate = DateTime.Now,
+                CreatedDate = DateTime.UtcNow,
                 Text = dto.Text
             };
 
             _context.Comments.Add(comm);
             await _context.SaveChangesAsync();
 
-
-
-            return Ok("Successfully created new comment");
+            return Ok(new { message = "Successfully created new comment", commentId = comm.IDcomment });
         }
 
-        //get
+        // Get all comments for an item
         [HttpGet("item/{ItemId}")]
         public async Task<ActionResult<List<CommentDTO>>> GetComments(int ItemId)
         {
@@ -54,26 +49,34 @@ namespace collectionsProject.Controllers
             if (userId == null) return Unauthorized();
 
             var comments = await _context.Comments
-                .Where(com => com.IDitem == ItemId)
+                .Where(c => c.IDitem == ItemId)
+                .Include(c => c.Commentator)
+                .Select(c => new CommentDTO
+                {
+                    IDcomment = c.IDcomment,
+                    IDitem = c.IDitem,
+                    Text = c.Text,
+                    CreatedDate = c.CreatedDate,
+                    Username = c.Commentator.UserName,
+                    AvatarBase64 = c.Commentator.Avatar != null ? Convert.ToBase64String(c.Commentator.Avatar) : null
+                })
                 .ToListAsync();
 
             return Ok(comments);
-
         }
 
-        //edit
+        // Edit
         [HttpPut("{id}")]
         public async Task<IActionResult> EditComment(int id, [FromBody] CommentDTO commDto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null) return Unauthorized();
             if (id != commDto.IDcomment)
-            {
                 return BadRequest("ID in URL and Body mismatch.");
-            }
 
             var existingComm = await _context.Comments
-                                    .FirstOrDefaultAsync(comm => comm.IDcomment == id && comm.IDcommentator == userId); // <-- FIXED
+                .FirstOrDefaultAsync(comm => comm.IDcomment == id && comm.IDcommentator == userId);
+
             if (existingComm == null)
                 return NotFound();
 
@@ -81,10 +84,10 @@ namespace collectionsProject.Controllers
 
             await _context.SaveChangesAsync();
 
-            return Ok();
+            return Ok(new { message = "Comment updated", commentId = existingComm.IDcomment });
         }
 
-        //delete
+        // Delete
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteComment(int id)
         {
@@ -92,22 +95,14 @@ namespace collectionsProject.Controllers
             if (userId == null) return Unauthorized();
 
             var comm = await _context.Comments
-                .FirstOrDefaultAsync(c => c.IDcomment == id && c.IDcommentator== userId);
+                .FirstOrDefaultAsync(c => c.IDcomment == id && c.IDcommentator == userId);
 
             if (comm == null) return NotFound();
 
             _context.Comments.Remove(comm);
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error while saving: {ex.Message}");
-            }
+            await _context.SaveChangesAsync();
 
-            return Ok();
+            return Ok(new { message = "Comment deleted" });
         }
-
     }
 }

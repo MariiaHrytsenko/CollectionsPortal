@@ -25,13 +25,14 @@ export async function addComment(token: string, itemId: string | number, text: s
 }
 
 export async function updateComment(token: string, comment: any) {
+  // Only send iDcomment and text fields
   const res = await fetch(`${API_BASE}/Comment/${comment.iDcomment}`, {
     method: "PUT",
     headers: {
       "Authorize": `Bearer ${token}`,
       "Content-Type": "application/json"
     },
-    body: JSON.stringify(comment)
+    body: JSON.stringify({ iDcomment: comment.iDcomment, text: comment.text })
   });
   if (!res.ok) throw new Error("Failed to update comment");
   return res.json();

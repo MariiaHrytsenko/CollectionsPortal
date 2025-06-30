@@ -16,6 +16,9 @@ const FriendItemsPage = () => {
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [showModal, setShowModal] = useState(false);
 
+  const [editingComment, setEditingComment] = useState<any | null>(null);
+  const [editText, setEditText] = useState("");
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token || !friendId) {
@@ -60,16 +63,45 @@ const FriendItemsPage = () => {
     setCommentLoading(prev => ({ ...prev, [iDitem]: false }));
   };
 
+  const handleEditComment = (comment: any) => {
+    setEditingComment(comment);
+    setEditText(comment.text);
+  };
+
+  const handleSaveEditComment = async () => {
+    if (!editingComment) return;
+    const token = localStorage.getItem("token") || "";
+    await updateComment(token, { ...editingComment, text: editText });
+    setEditingComment(null);
+    setEditText("");
+    await fetchComments(editingComment.iDitem);
+  };
+
+  const handleDeleteComment = async (commentId: number, iDitem: number) => {
+    const token = localStorage.getItem("token") || "";
+    await deleteComment(token, commentId);
+    await fetchComments(iDitem);
+  };
+
+  // Only fetch comments for items with a valid iDitem (not 0, not undefined/null)
   useEffect(() => {
     if (items.length > 0) {
-      items.forEach(item => fetchComments(item.iDitem));
+      items.forEach(item => {
+        const iDitem = item.iDitem !== undefined ? item.iDitem : item.iditem;
+        if (iDitem && typeof iDitem === 'number' && iDitem > 0) {
+          fetchComments(iDitem);
+        }
+      });
     }
     // eslint-disable-next-line
   }, [items]);
 
   useEffect(() => {
-    if (showModal && selectedItem && selectedItem.iDitem) {
-      fetchComments(selectedItem.iDitem);
+    if (showModal && selectedItem && (selectedItem.iDitem || selectedItem.iditem)) {
+      const iDitem = selectedItem.iDitem !== undefined ? selectedItem.iDitem : selectedItem.iditem;
+      if (iDitem && typeof iDitem === 'number' && iDitem > 0) {
+        fetchComments(iDitem);
+      }
     }
     // eslint-disable-next-line
   }, [showModal, selectedItem]);
@@ -87,44 +119,50 @@ const FriendItemsPage = () => {
         {items.length === 0 ? (
           <div style={{ color: '#888' }}>No items found.</div>
         ) : (
-          items.map(item => (
-            <div key={item.iDitem} style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', padding: 18 }}>
-              {/* Show all item fields */}
-              <div style={{ display: 'flex', gap: 24, alignItems: 'center', marginBottom: 10 }}>
-                <img
-                  src={item.photoItem && item.photoItem.trim() !== '' ? `data:image/png;base64,${item.photoItem}` : "/default-item.png"}
-                  onError={e => {
-                    const target = e.target as HTMLImageElement;
-                    if (!target.src.endsWith('/default-item.jpeg')) {
-                      target.src = '/default-item.jpeg';
-                    }
-                  }}
-                  alt={item.nameItem || item.title || item.name}
-                  style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
-                />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: '1.15rem', marginBottom: 2 }}>{item.nameItem || item.title || item.name}</div>
-                  <div style={{ color: '#888', marginBottom: 2 }}>{item.description}</div>
-                  {/* Show characteristics if present */}
-                  {item.characteristics && typeof item.characteristics === 'object' && (
-                    <div style={{ marginTop: 4 }}>
-                      {Object.entries(item.characteristics).map(([k, v]) => (
-                        <div key={k} style={{ color: '#555', fontSize: '0.98rem' }}><b>{k}:</b> {String(v)}</div>
-                      ))}
-                    </div>
-                  )}
+          items.map(item => {
+            // Normalize iditem to iDitem for frontend usage
+            const iDitem = item.iDitem !== undefined ? item.iDitem : item.iditem;
+            return (
+              <div key={iDitem} style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', padding: 18 }}>
+                {/* Show all item fields */}
+                <div style={{ display: 'flex', gap: 24, alignItems: 'center', marginBottom: 10 }}>
+                  <img
+                    src={item.photoItem && item.photoItem.trim() !== '' ? `data:image/png;base64,${item.photoItem}` : "/default-item.png"}
+                    onError={e => {
+                      const target = e.target as HTMLImageElement;
+                      if (!target.src.endsWith('/default-item.jpeg')) {
+                        target.src = '/default-item.jpeg';
+                      }
+                    }}
+                    alt={item.nameItem || item.title || item.name}
+                    style={{ width: 80, height: 80, borderRadius: 8, objectFit: 'cover', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: '1.15rem', marginBottom: 2 }}>{item.nameItem || item.title || item.name}</div>
+                    <div style={{ color: '#888', marginBottom: 2 }}>{item.description}</div>
+                    {/* Show iDitem for debug */}
+                    <div style={{ color: '#b00', fontSize: '0.95rem', marginBottom: 2 }}><b>iDitem:</b> {iDitem}</div>
+                    {/* Show characteristics if present */}
+                    {item.characteristics && typeof item.characteristics === 'object' && (
+                      <div style={{ marginTop: 4 }}>
+                        {Object.entries(item.characteristics).map(([k, v]) => (
+                          <div key={k} style={{ color: '#555', fontSize: '0.98rem' }}><b>{k}:</b> {String(v)}</div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <button className="button" style={{ marginLeft: 12 }} onClick={() => { setSelectedItem({ ...item, iDitem }); setShowModal(true); setCommentInputs(prev => ({ ...prev, [iDitem]: "" })); }}>View Details</button>
                 </div>
-                <button className="button" style={{ marginLeft: 12 }} onClick={() => { setSelectedItem(item); setShowModal(true); setCommentInputs(prev => ({ ...prev, [item.iDitem]: "" })); }}>View Details</button>
+                {/* Comments section removed from board view */}
               </div>
-              {/* Comments section removed from board view */}
-            </div>
-          ))
+            );
+          })
         )}
       </div>
       {/* Modal for item details and comments */}
       {showModal && selectedItem && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.25)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: 28, minWidth: 350, maxWidth: 500, boxShadow: '0 4px 24px rgba(0,0,0,0.15)', position: 'relative' }}>
+          <div style={{ background: '#fff', borderRadius: 12, padding: 28, minWidth: 400, maxWidth: 650, boxShadow: '0 4px 24px rgba(0,0,0,0.15)', position: 'relative' }}>
             <button onClick={() => setShowModal(false)} style={{ position: 'absolute', top: 10, right: 10, background: 'none', border: 'none', fontSize: 22, cursor: 'pointer' }}>&times;</button>
             <div style={{ display: 'flex', gap: 18, alignItems: 'center', marginBottom: 10 }}>
               <img
@@ -151,27 +189,40 @@ const FriendItemsPage = () => {
               </div>
             </div>
             {/* Comments section for selected item */}
-            <div style={{ marginTop: 16, background: '#f9fbfd', borderRadius: 8, padding: 12 }}>
-              <div style={{ fontWeight: 500, marginBottom: 6 }}>Comments:</div>
+            <div style={{ marginTop: 16, background: '#f9fbfd', borderRadius: 8, padding: 24, minHeight: 250, maxHeight: 500, overflowY: 'auto' }}>
+              <div style={{ fontWeight: 500, marginBottom: 10, fontSize: '1.15rem' }}>Comments:</div>
               {commentLoading[selectedItem.iDitem] ? (
                 <div style={{ color: '#888' }}>Loading comments...</div>
               ) : (
                 <>
                   {comments[selectedItem.iDitem] && comments[selectedItem.iDitem].length > 0 ? (
-                    comments[selectedItem.iDitem].map((c: any) => (
-                      <div key={c.iDcomment} style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #eee', padding: '6px 0' }}>
-                        <img
-                          src={c.userAvatar ? `data:image/png;base64,${c.userAvatar}` : "/standart-user.png"}
-                          alt={c.userName || 'User'}
-                          style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', marginRight: 10, boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
-                        />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 500, fontSize: '0.98rem' }}>{c.userName || 'User'}</div>
-                          <div style={{ fontSize: '0.98rem' }}>{c.text}</div>
-                          <div style={{ color: '#888', fontSize: '0.85rem' }}>{c.createdDate && new Date(c.createdDate).toLocaleString()}</div>
+                    comments[selectedItem.iDitem].map((c: any) => {
+                      const isAuthor = c.iDcommentator === localStorage.getItem('userId'); // You must set userId in localStorage after login
+                      return (
+                        <div key={c.iDcomment} style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #eee', padding: '6px 0' }}>
+                          <img
+                            src={c.userAvatar ? `data:image/png;base64,${c.userAvatar}` : "/standart-user.png"}
+                            alt={c.userName || 'User'}
+                            style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', marginRight: 10, boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
+                          />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 500, fontSize: '0.98rem' }}>{c.userName || 'User'}</div>
+                            <div style={{ fontSize: '0.98rem' }}>{c.text}</div>
+                            <div style={{ color: '#888', fontSize: '0.85rem' }}>{c.createdDate && new Date(c.createdDate).toLocaleString()}</div>
+                          </div>
+                          {isAuthor && (
+                            <div style={{ display: 'flex', gap: 4 }}>
+                              <button className="button" style={{ fontSize: 12, padding: '2px 8px' }} onClick={() => handleEditComment(c)}>
+                                Edit
+                              </button>
+                              <button className="button" style={{ fontSize: 12, padding: '2px 8px', background: '#dc3545', color: '#fff' }} onClick={() => handleDeleteComment(c.iDcomment, selectedItem.iDitem)}>
+                                Delete
+                              </button>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <div style={{ color: '#aaa' }}>No comments yet.</div>
                   )}
@@ -189,6 +240,22 @@ const FriendItemsPage = () => {
                   Add
                 </button>
               </div>
+              {/* Edit comment section */}
+              {editingComment && (
+                <div style={{ marginTop: 10, background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 6, padding: 10 }}>
+                  <div style={{ marginBottom: 6 }}>Edit your comment:</div>
+                  <input
+                    type="text"
+                    value={editText}
+                    onChange={e => setEditText(e.target.value)}
+                    style={{ width: '100%', padding: 6, borderRadius: 6, border: '1px solid #b5c9e2' }}
+                  />
+                  <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                    <button className="button" onClick={handleSaveEditComment} style={{ minWidth: 70 }}>Save</button>
+                    <button className="button" onClick={() => setEditingComment(null)} style={{ minWidth: 70 }}>Cancel</button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
