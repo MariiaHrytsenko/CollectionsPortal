@@ -32,10 +32,6 @@ interface category {
   }[];
 }
 
-
-
-
-
 const CategoriesPage = () => {
   const { lang } = useLanguage();
    const [cats, setCategories] = useState<category[]>([]);
@@ -44,7 +40,6 @@ const CategoriesPage = () => {
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState<string>("");
-
   useEffect(() => {
     axios
       .get(`${API_URL}/Categories/user-categories`, { withCredentials: true })
@@ -105,6 +100,5 @@ const CategoriesPage = () => {
     </div>
   );
 };
-
 
 export default CategoriesPage;

@@ -12,11 +12,25 @@ const translations = {
     itemsInCategory: "Items in Category",
     createNewItem: "+ Create New Item",
     noItems: "No items found in this category.",
+    search: "Search items...",
+    sortAsc: "Sort: A-Z",
+    sortDesc: "Sort: Z-A",
+    searchBy: "Search by:",
+    name: "Name",
+    characteristics: "Characteristics",
+    loading: "Loading..."
   },
   pl: {
     itemsInCategory: "Przedmioty w kategorii",
     createNewItem: "+ Dodaj nowy przedmiot",
     noItems: "Brak przedmiotów w tej kategorii.",
+    search: "Szukaj przedmiotów...",
+    sortAsc: "Sortuj: A-Z",
+    sortDesc: "Sortuj: Z-A",
+    searchBy: "Szukaj po:",
+    name: "Nazwa",
+    characteristics: "Cechy",
+    loading: "Ładowanie..."
   },
 };
 
