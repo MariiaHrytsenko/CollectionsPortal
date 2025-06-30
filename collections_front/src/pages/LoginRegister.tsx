@@ -79,7 +79,7 @@ const LoginRegister = () => {
           userName: formData.userName,
           email: formData.email,
           password: formData.password,
-          phone: formData.phone,
+          phoneNumber: formData.phone,
           avatarBase64,
         });
         setIsLogin(true); // після реєстрації — перемикаємося на login

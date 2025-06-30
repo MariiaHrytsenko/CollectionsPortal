@@ -11,6 +11,8 @@ import CreateItemPage from "../pages/CreateItemPage";
 import ProfilePage from "../pages/ProfilePage";
 import FriendsPage from "../pages/FriendsPage";
 import CatList from "../pages/CatList";
+import AcceptInvitationPage from "../pages/AcceptInvitationPage";
+import FriendItemsPage from "../pages/FriendItemsPage";
 
 const isAuthenticated = () => {
   return !!localStorage.getItem("token");
@@ -23,6 +25,7 @@ const PrivateRoute = ({ element }: { element: React.ReactElement }) => {
 const AppRouter = () => {
   return (
     <Routes>
+      <Route path="/invitations/accept" element={<AcceptInvitationPage />} />
       <Route path="/login" element={<LoginRegister />} />
       <Route path="/" element={<PrivateRoute element={<HomePage />} />} />
       <Route path="/categories" element={<PrivateRoute element={<CategoriesPage />} />} />
@@ -34,6 +37,7 @@ const AppRouter = () => {
       <Route path="/profile" element={<PrivateRoute element={<ProfilePage />} />} />
       <Route path="/friends" element={<PrivateRoute element={<FriendsPage />} />} />
       <Route path="/catlist" element={<PrivateRoute element={<CatList />} />} />
+      <Route path="/friends/:friendId/items" element={<PrivateRoute element={<FriendItemsPage />} />} />
       <Route path="*" element={<Er404 />} />
     </Routes>
   );

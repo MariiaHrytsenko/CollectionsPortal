@@ -1,4 +1,4 @@
-﻿using collectionsProject.Models;
+using collectionsProject.Models;
 using collectionsProject.Services;
 using collectionsProject.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
