@@ -12,11 +12,25 @@ const translations = {
     itemsInCategory: "Items in Category",
     createNewItem: "+ Create New Item",
     noItems: "No items found in this category.",
+    search: "Search items...",
+    sortAsc: "Sort: A-Z",
+    sortDesc: "Sort: Z-A",
+    searchBy: "Search by:",
+    name: "Name",
+    characteristics: "Characteristics",
+    loading: "Loading..."
   },
   pl: {
     itemsInCategory: "Przedmioty w kategorii",
     createNewItem: "+ Dodaj nowy przedmiot",
     noItems: "Brak przedmiotów w tej kategorii.",
+    search: "Szukaj przedmiotów...",
+    sortAsc: "Sortuj: A-Z",
+    sortDesc: "Sortuj: Z-A",
+    searchBy: "Szukaj po:",
+    name: "Nazwa",
+    characteristics: "Cechy",
+    loading: "Ładowanie..."
   },
 };
 
@@ -69,6 +83,9 @@ const CategoryItemsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [items, setItems] = useState<item[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [searchBy, setSearchBy] = useState<"name" | "characteristics">("name");
 
   const { id } = useParams();
 
@@ -98,43 +115,106 @@ const CategoryItemsPage = () => {
     }
   }, [id]);
 
+  const filteredItems = React.useMemo(() => {
+    return items.filter((item) => {
+      const searchLower = searchTerm.toLowerCase();
+      
+      if (searchBy === "name") {
+        return item.nameItem?.toLowerCase().includes(searchLower);
+      } else {
+        return item.chracteristics?.some(
+          char => 
+            char.nameCharacteristic?.toLowerCase().includes(searchLower) ||
+            char.value?.toLowerCase().includes(searchLower)
+        );
+      }
+    });
+  }, [items, searchTerm, searchBy]);
+
+  const sortedItems = React.useMemo(() => {
+    return [...filteredItems].sort((a, b) => {
+      const nameA = a.nameItem?.toLowerCase() || "";
+      const nameB = b.nameItem?.toLowerCase() || "";
+      return sortOrder === "asc" 
+        ? nameA.localeCompare(nameB)
+        : nameB.localeCompare(nameA);
+    });
+  }, [filteredItems, sortOrder]);
+
   return (
     <div className="home-container">
       {loading ? (
         <div style={{ color: '#007bff', fontWeight: 'bold', margin: '2rem 0', textAlign: 'center' }}>
-          {lang === 'pl' ? 'Ładowanie...' : 'Loading...'}
+          {t.loading}
         </div>
       ) : error ? (
-        <div
-          style={{
-            color: "red",
-            fontWeight: "bold",
-            margin: "2rem 0",
-            textAlign: "center",
-          }}
-        >
+        <div style={{ color: "red", fontWeight: "bold", margin: "2rem 0", textAlign: "center" }}>
           {error}
         </div>
       ) : (
         <>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 24,
-            }}
-          >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
             <h2 style={{ color: "#007bff" }}>{t.itemsInCategory}</h2>
             <button className="button">{t.createNewItem}</button>
           </div>
+
+          <div style={{ marginBottom: "1.5rem", display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: "200px" }}>
+              <input
+                type="text"
+                placeholder={t.search}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "0.5rem",
+                  border: "1px solid #ddd",
+                  borderRadius: "4px",
+                }}
+              />
+            </div>
+            
+            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+              <span>{t.searchBy}</span>
+              <select
+                value={searchBy}
+                onChange={(e) => setSearchBy(e.target.value as "name" | "characteristics")}
+                style={{ padding: "0.5rem", border: "1px solid #ddd", borderRadius: "4px" }}
+              >
+                <option value="name">{t.name}</option>
+                <option value="characteristics">{t.characteristics}</option>
+              </select>
+            </div>
+
+            <button
+              onClick={() => setSortOrder(prev => prev === "asc" ? "desc" : "asc")}
+              style={{
+                padding: "0.5rem 1rem",
+                border: "1px solid #007bff",
+                borderRadius: "4px",
+                background: "#007bff",
+                color: "#fff",
+                cursor: "pointer",
+              }}
+            >
+              {sortOrder === "asc" ? t.sortAsc : t.sortDesc}
+            </button>
+          </div>
+
           <div className="pinterest-grid">
-            {items.length === 0 ? (
+            {sortedItems.length === 0 ? (
               <div style={{ color: "#888", fontSize: "1rem" }}>{t.noItems}</div>
             ) : (
-              items.map((item) => (
+              sortedItems.map((item) => (
                 <div className="item-card" key={item.iditem}>
-                  <img src={item.photoItem} alt={item.nameItem} />
+                  <img
+                    src={
+                      item.photoItem && item.photoItem.trim() !== ""
+                        ? item.photoItem
+                        : "/default-item.jpeg"
+                    }
+                    alt={item.nameItem || "No name"}
+                  />
                   <div className="item-card-header">
                     <h3 className="item-title">{item.nameItem}</h3>
                     <h4 className="item-id">
