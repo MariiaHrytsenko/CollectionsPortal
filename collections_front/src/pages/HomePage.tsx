@@ -47,7 +47,7 @@ function HomePage() {
         <Link to="/items/create">Create Item</Link>
         <Link to="/profile">Profile</Link>
         <Link to="/friends">Friends</Link>
-        <Link to="/catlist">CatList</Link>
+        <Link to="/characteristics">Characteristics Manager</Link>
         <Link to="/login" className="logout-link">Logout</Link>
       </nav>
       <div className="home-container">

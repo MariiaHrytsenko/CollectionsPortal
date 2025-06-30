@@ -13,6 +13,7 @@ import FriendsPage from "../pages/FriendsPage";
 import CatList from "../pages/CatList";
 import AcceptInvitationPage from "../pages/AcceptInvitationPage";
 import FriendItemsPage from "../pages/FriendItemsPage";
+import CharacteristicsManagerPage from "../pages/CharacteristicsManagerPage";
 
 const isAuthenticated = () => {
   return !!localStorage.getItem("token");
@@ -38,6 +39,7 @@ const AppRouter = () => {
       <Route path="/friends" element={<PrivateRoute element={<FriendsPage />} />} />
       <Route path="/catlist" element={<PrivateRoute element={<CatList />} />} />
       <Route path="/friends/:friendId/items" element={<PrivateRoute element={<FriendItemsPage />} />} />
+      <Route path="/characteristics" element={<PrivateRoute element={<CharacteristicsManagerPage />} />} />
       <Route path="*" element={<Er404 />} />
     </Routes>
   );

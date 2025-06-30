@@ -164,12 +164,25 @@ export default function Navbar() {
                 to="/catlist"
                 style={{
                   ...styles.link,
-                  ...(hovered === "catList" ? styles.linkHover : {}),
+                  //...(hovered === "catList" ? styles.linkHover : {}),
                 }}
                 onMouseEnter={() => setHovered("catList")}
                 onMouseLeave={() => setHovered(null)}
               >
                 {t.catList}
+              </Link>
+            </li>
+            <li style={styles.navItem}>
+              <Link
+                to="/characteristics"
+                style={{
+                  ...styles.link,
+                  ...(hovered === "characteristics" ? styles.linkHover : {}),
+                }}
+                onMouseEnter={() => setHovered("characteristics")}
+                onMouseLeave={() => setHovered(null)}
+              >
+                {lang === 'pl' ? 'Cechy' : 'Characteristics'}
               </Link>
             </li>
             <li style={styles.navItem}>
