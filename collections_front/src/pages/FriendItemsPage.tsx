@@ -26,7 +26,6 @@ const FriendItemsPage = () => {
       setLoading(false);
       return;
     }
-    // Optionally fetch friend's name here if needed
     getFriendItems(token, friendId)
       .then(data => {
         setItems(data);
@@ -56,7 +55,7 @@ const FriendItemsPage = () => {
     if (!text) return;
     setCommentLoading(prev => ({ ...prev, [iDitem]: true }));
     try {
-      await addComment(token, iDitem, text); // This sends { iDitem, text } as required
+      await addComment(token, iDitem, text);
       setCommentInputs(prev => ({ ...prev, [iDitem]: "" }));
       await fetchComments(iDitem);
     } catch {}
@@ -71,7 +70,7 @@ const FriendItemsPage = () => {
   const handleSaveEditComment = async () => {
     if (!editingComment) return;
     const token = localStorage.getItem("token") || "";
-    await updateComment(token, { ...editingComment, text: editText });
+    await updateComment(token, { iDcomment: editingComment.iDcomment, text: editText });
     setEditingComment(null);
     setEditText("");
     await fetchComments(editingComment.iDitem);
@@ -83,7 +82,6 @@ const FriendItemsPage = () => {
     await fetchComments(iDitem);
   };
 
-  // Only fetch comments for items with a valid iDitem (not 0, not undefined/null)
   useEffect(() => {
     if (items.length > 0) {
       items.forEach(item => {
@@ -93,7 +91,6 @@ const FriendItemsPage = () => {
         }
       });
     }
-    // eslint-disable-next-line
   }, [items]);
 
   useEffect(() => {
@@ -103,7 +100,6 @@ const FriendItemsPage = () => {
         fetchComments(iDitem);
       }
     }
-    // eslint-disable-next-line
   }, [showModal, selectedItem]);
 
   if (loading) return <div className="home-container">Loading...</div>;
@@ -113,18 +109,13 @@ const FriendItemsPage = () => {
     <div className="home-container" style={{ maxWidth: 800 }}>
       <h2 style={{ color: '#007bff', marginBottom: 24 }}>Friend's Collection</h2>
       <div style={{ display: 'grid', gap: 18 }}>
-        {/*
-          No filtering for integer IDs: all items are created in the DB and IDs are always valid integers.
-        */}
         {items.length === 0 ? (
           <div style={{ color: '#888' }}>No items found.</div>
         ) : (
           items.map(item => {
-            // Normalize iditem to iDitem for frontend usage
             const iDitem = item.iDitem !== undefined ? item.iDitem : item.iditem;
             return (
               <div key={iDitem} style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', padding: 18 }}>
-                {/* Show all item fields */}
                 <div style={{ display: 'flex', gap: 24, alignItems: 'center', marginBottom: 10 }}>
                   <img
                     src={item.photoItem && item.photoItem.trim() !== '' ? `data:image/png;base64,${item.photoItem}` : "/default-item.png"}
@@ -140,9 +131,7 @@ const FriendItemsPage = () => {
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 600, fontSize: '1.15rem', marginBottom: 2 }}>{item.nameItem || item.title || item.name}</div>
                     <div style={{ color: '#888', marginBottom: 2 }}>{item.description}</div>
-                    {/* Show iDitem for debug */}
                     <div style={{ color: '#b00', fontSize: '0.95rem', marginBottom: 2 }}><b>iDitem:</b> {iDitem}</div>
-                    {/* Show characteristics if present */}
                     {item.characteristics && typeof item.characteristics === 'object' && (
                       <div style={{ marginTop: 4 }}>
                         {Object.entries(item.characteristics).map(([k, v]) => (
@@ -153,13 +142,11 @@ const FriendItemsPage = () => {
                   </div>
                   <button className="button" style={{ marginLeft: 12 }} onClick={() => { setSelectedItem({ ...item, iDitem }); setShowModal(true); setCommentInputs(prev => ({ ...prev, [iDitem]: "" })); }}>View Details</button>
                 </div>
-                {/* Comments section removed from board view */}
               </div>
             );
           })
         )}
       </div>
-      {/* Modal for item details and comments */}
       {showModal && selectedItem && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.25)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ background: '#fff', borderRadius: 12, padding: 28, minWidth: 400, maxWidth: 650, boxShadow: '0 4px 24px rgba(0,0,0,0.15)', position: 'relative' }}>
@@ -188,7 +175,6 @@ const FriendItemsPage = () => {
                 )}
               </div>
             </div>
-            {/* Comments section for selected item */}
             <div style={{ marginTop: 16, background: '#f9fbfd', borderRadius: 8, padding: 24, minHeight: 250, maxHeight: 500, overflowY: 'auto' }}>
               <div style={{ fontWeight: 500, marginBottom: 10, fontSize: '1.15rem' }}>Comments:</div>
               {commentLoading[selectedItem.iDitem] ? (
@@ -197,7 +183,7 @@ const FriendItemsPage = () => {
                 <>
                   {comments[selectedItem.iDitem] && comments[selectedItem.iDitem].length > 0 ? (
                     comments[selectedItem.iDitem].map((c: any) => {
-                      const isAuthor = c.iDcommentator === localStorage.getItem('userId'); // You must set userId in localStorage after login
+                      const isAuthor = c.iDcommentator === localStorage.getItem('userId');
                       return (
                         <div key={c.iDcomment} style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #eee', padding: '6px 0' }}>
                           <img
@@ -240,7 +226,6 @@ const FriendItemsPage = () => {
                   Add
                 </button>
               </div>
-              {/* Edit comment section */}
               {editingComment && (
                 <div style={{ marginTop: 10, background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 6, padding: 10 }}>
                   <div style={{ marginBottom: 6 }}>Edit your comment:</div>
