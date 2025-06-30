@@ -68,7 +68,7 @@ namespace collectionsProject.Services
             var body = $"Dzień dobry,\n\n" +
                        $"Otrzymałeś zaproszenie do grona znajomych w aplikacji CollectionsProject.\n" +
                        $"Aby zaakceptować zaproszenie, kliknij w poniższy link:\n" +
-                       $"http://localhost:5057/Invitations/Accept?token={token}\n\n" +
+                       $"http://localhost:3000/friends?token={token}\n\n" +
                        "Pozdrawiamy,\nZespół CollectionsProject";
 
             using var smtp = new SmtpClient

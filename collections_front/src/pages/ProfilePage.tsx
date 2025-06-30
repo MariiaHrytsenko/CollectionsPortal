@@ -43,9 +43,16 @@ const ProfilePage = () => {
 
   // Helper to check uniqueness
   const checkUnique = async (field: string, value: string) => {
+    // Normalize field name for backend compatibility
+    let normalizedField = field;
+    if (field.toLowerCase() === "username" || field === "userName") {
+      normalizedField = "userName";
+    } else if (field.toLowerCase() === "email") {
+      normalizedField = "email";
+    }
     const token = localStorage.getItem('token') || '';
     try {
-      const res = await fetch(`/api/Account/check-unique?field=${field}&value=${encodeURIComponent(value)}`, {
+      const res = await fetch(`/api/Account/check-unique?field=${normalizedField}&value=${encodeURIComponent(value)}`, {
         headers: { 'Authorize': `Bearer ${token}` }
       });
       if (!res.ok) {
@@ -77,16 +84,23 @@ const ProfilePage = () => {
         }
       }
       const token = localStorage.getItem('token') || '';
-      let updateData: any = {};
-      if (field === 'avatarBase64') {
-        updateData.avatarBase64 = editValue;
-      } else {
-        updateData[field] = editValue;
-      }
+      let updateData: any = {
+        email: undefined,
+        userName: undefined,
+        phoneNumber: undefined,
+        avatarBase64: undefined
+      };
+      // Only set the field being edited
+      if (field === 'email') updateData.email = editValue;
+      else if (field === 'userName') updateData.userName = editValue;
+      else if (field === 'phoneNumber') updateData.phoneNumber = editValue;
+      else if (field === 'avatarBase64') updateData.avatarBase64 = editValue;
+      // Remove undefined fields
+      Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
       const res = await fetch('/api/Account/me', {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorize': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(updateData),
@@ -165,7 +179,7 @@ const ProfilePage = () => {
     }}>
       <div style={{ position: 'relative', marginBottom: 28 }}>
         <img
-          src={profile.avatarBase64 ? `data:image/png;base64,${profile.avatarBase64}` : 'https://randomuser.me/api/portraits/lego/1.jpg'}
+          src={profile.avatarBase64 ? `data:image/png;base64,${profile.avatarBase64}` : "/standart-user.png"}
           alt="avatar"
           style={{
             width: 110,
