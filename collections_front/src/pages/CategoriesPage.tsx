@@ -91,7 +91,7 @@ const CategoriesPage = () => {
                   ) : (
                     <em>No characteristics available.</em>
                   )}
-              <button className="button" onClick={() => navigate(`/categories/${cat.idcategory}/items`)} style={{ width: '100%', marginTop: 8 }}>{t.viewItems}</button>
+              <button className="button" onClick={() => navigate(`/categories/${cat.idcategory}`)} style={{ width: '100%', marginTop: 8 }}>{t.viewItems}</button>
             </div>
             </div>
           ))}

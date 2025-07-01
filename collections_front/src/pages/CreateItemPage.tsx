@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import "../AppStyles.css";
 import { useLanguage } from "../LanguageContext";
-import { addItem } from "../api/item";
+import axios from "axios";
+import AppConfig from "../AppConfig.json";
 
 const translations = {
   en: {
@@ -66,14 +67,9 @@ const CreateItemPage = () => {
         return;
       }
     }
-    // Get token from localStorage
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setError("Not authenticated");
-      return;
-    }
+    
     try {
-      await addItem(token, {
+      await axios.post(`${AppConfig.API_URL}/Item`, {
         nameItem: name,
         photoItem,
         categoryId,
@@ -81,6 +77,11 @@ const CreateItemPage = () => {
           { idchracteristic: 0, value: desc }, // Use desc as first characteristic
           ...characteristics.filter(c => c.value.trim() !== "")
         ]
+      }, {
+        withCredentials: true, // This enables cookie authentication
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
       setSuccess(true);
       setName("");
@@ -89,7 +90,7 @@ const CreateItemPage = () => {
       setCategoryId(0);
       setCharacteristics([]);
     } catch (err: any) {
-      setError(err.message || "Failed to create item");
+      setError(err.response?.data?.message || err.message || "Failed to create item");
     }
   };
 
