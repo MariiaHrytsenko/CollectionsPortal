@@ -13,13 +13,13 @@ const translations = {
     categories: "Categories",
     newCategory: "New Category",
     characteristics: "Characteristics",
-    viewItems: "View Items",
+    viewDetails: "View Details",
   },
   pl: {
     categories: "Kategorie",
     newCategory: "Nowa kategoria",
     characteristics: "Cechy",
-    viewItems: "Zobacz przedmioty",
+    viewDetails: "Zobacz szczegóły",
   },
 };
 
@@ -91,7 +91,7 @@ const CategoriesPage = () => {
                   ) : (
                     <em>No characteristics available.</em>
                   )}
-              <button className="button" onClick={() => navigate(`/categories/${cat.idcategory}`)} style={{ width: '100%', marginTop: 8 }}>{t.viewItems}</button>
+              <button className="button" onClick={() => navigate(`/categories/${cat.idcategory}`)} style={{ width: '100%', marginTop: 8 }}>{t.viewDetails}</button>
             </div>
             </div>
           ))}

@@ -8,6 +8,7 @@ import AllItemsPage from "../pages/AllItemsPage";
 import CategoryItemsPage from "../pages/CategoryItemsPage";
 import CategorySetupPage from "../pages/CategorySetupPage";
 import CreateItemPage from "../pages/CreateItemPage";
+import ItemDetailsPage from "../pages/ItemDetailsPage";
 import ProfilePage from "../pages/ProfilePage";
 import FriendsPage from "../pages/FriendsPage";
 import CatList from "../pages/CatList";
@@ -35,6 +36,8 @@ const AppRouter = () => {
       <Route path="/categories/info/:id" element={<PrivateRoute element={<CategoryItemsPage />} />} />
       <Route path="/items" element={<PrivateRoute element={<AllItemsPage />} />} />
       <Route path="/items/create" element={<PrivateRoute element={<CreateItemPage />} />} />
+      <Route path="/items/create/:categoryId" element={<PrivateRoute element={<CreateItemPage />} />} />
+      <Route path="/items/:id" element={<PrivateRoute element={<ItemDetailsPage />} />} />
       <Route path="/profile" element={<PrivateRoute element={<ProfilePage />} />} />
       <Route path="/friends" element={<PrivateRoute element={<FriendsPage />} />} />
       <Route path="/catlist" element={<PrivateRoute element={<CatList />} />} />
