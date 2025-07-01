@@ -45,7 +45,17 @@ const translations = {
     loadingComments: "Loading comments...",
     failedToLoadComments: "Failed to load comments.",
     commentDate: "on",
-    commentsCount: "comments"
+    commentsCount: "comments",
+    addComment: "Add Comment",
+    commentText: "Comment text",
+    commentTextPlaceholder: "Enter your comment...",
+    submit: "Submit",
+    submittingComment: "Submitting...",
+    commentAddedSuccess: "Comment added successfully!",
+    failedToAddComment: "Failed to add comment.",
+    failedToGetUser: "Failed to get user information.",
+    commentTooShort: "Comment must be at least 1 character long.",
+    closePopup: "Close"
   },
   pl: {
     itemDetails: "Szczegóły przedmiotu",
@@ -84,7 +94,17 @@ const translations = {
     loadingComments: "Ładowanie komentarzy...",
     failedToLoadComments: "Nie udało się załadować komentarzy.",
     commentDate: "dnia",
-    commentsCount: "komentarzy"
+    commentsCount: "komentarzy",
+    addComment: "Dodaj komentarz",
+    commentText: "Tekst komentarza",
+    commentTextPlaceholder: "Wprowadź swój komentarz...",
+    submit: "Wyślij",
+    submittingComment: "Wysyłanie...",
+    commentAddedSuccess: "Komentarz dodany pomyślnie!",
+    failedToAddComment: "Nie udało się dodać komentarza.",
+    failedToGetUser: "Nie udało się pobrać informacji o użytkowniku.",
+    commentTooShort: "Komentarz musi mieć co najmniej 1 znak.",
+    closePopup: "Zamknij"
   },
 };
 
@@ -111,6 +131,12 @@ interface Comment {
   avatarBase64: string;
 }
 
+interface User {
+  id: string;
+  name: string;
+  avatarBase64: string;
+}
+
 const ItemDetailsPage = () => {
   const { lang } = useLanguage();
   const t = translations[lang];
@@ -127,6 +153,12 @@ const ItemDetailsPage = () => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsError, setCommentsError] = useState<string | null>(null);
+  
+  // Comment popup state
+  const [showCommentPopup, setShowCommentPopup] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
   
   // Edit form state
   const [editName, setEditName] = useState("");
@@ -214,6 +246,67 @@ const ItemDetailsPage = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  // Handle opening comment popup
+  const handleAddCommentClick = () => {
+    setShowCommentPopup(true);
+    setCommentText('');
+    setCommentError(null);
+  };
+
+  // Handle closing comment popup
+  const handleCloseCommentPopup = () => {
+    setShowCommentPopup(false);
+    setCommentText('');
+    setCommentError(null);
+  };
+
+  // Handle comment submission
+  const handleSubmitComment = async () => {
+    if (!item) return;
+
+    // Validate comment text
+    if (!commentText.trim()) {
+      setCommentError(t.commentTooShort);
+      return;
+    }
+
+    setSubmittingComment(true);
+    setCommentError(null);
+
+    try {
+      // First, get user information
+      const userResponse = await axios.get(`${API_URL}/Account/me`, { withCredentials: true });
+      const user: User = userResponse.data;
+
+      // Then submit the comment
+      const commentData = {
+        iDitem: item.iditem,
+        text: commentText.trim(),
+        iDcommentator: user.id
+      };
+
+      await axios.post(`${API_URL}/Comment`, commentData, { withCredentials: true });
+
+      // Close popup and refresh comments
+      setShowCommentPopup(false);
+      setCommentText('');
+      setSuccessMessage(t.commentAddedSuccess);
+      
+      // Refresh comments
+      fetchComments();
+
+    } catch (error: any) {
+      console.error('Error adding comment:', error);
+      if (error.response?.status === 401) {
+        setCommentError(t.failedToGetUser);
+      } else {
+        setCommentError(t.failedToAddComment);
+      }
+    } finally {
+      setSubmittingComment(false);
+    }
   };
 
   const handleEditClick = () => {
@@ -663,6 +756,32 @@ const ItemDetailsPage = () => {
                 </span>
               </div>
 
+              {/* Add Comment Button */}
+              <div style={{ marginBottom: '20px' }}>
+                <button
+                  onClick={handleAddCommentClick}
+                  style={{
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '10px 20px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#0056b3';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#007bff';
+                  }}
+                >
+                  {t.addComment}
+                </button>
+              </div>
+
               {commentsLoading ? (
                 <div style={{ 
                   color: '#007bff', 
@@ -768,6 +887,137 @@ const ItemDetailsPage = () => {
             </div>
           </div>
         </>
+      )}
+
+      {/* Comment Popup Modal */}
+      {showCommentPopup && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '24px',
+            width: '90%',
+            maxWidth: '500px',
+            maxHeight: '80vh',
+            overflow: 'auto',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '20px',
+              borderBottom: '1px solid #dee2e6',
+              paddingBottom: '12px'
+            }}>
+              <h3 style={{ margin: 0, color: '#495057' }}>{t.addComment}</h3>
+              <button
+                onClick={handleCloseCommentPopup}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#6c757d',
+                  padding: '0',
+                  lineHeight: '1'
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '500',
+                color: '#495057'
+              }}>
+                {t.commentText}
+              </label>
+              <textarea
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder={t.commentTextPlaceholder}
+                rows={4}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  resize: 'vertical',
+                  minHeight: '100px',
+                  fontFamily: 'inherit'
+                }}
+              />
+              
+              {commentError && (
+                <div style={{
+                  color: '#dc3545',
+                  fontSize: '14px',
+                  marginTop: '8px'
+                }}>
+                  {commentError}
+                </div>
+              )}
+            </div>
+
+            <div style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '12px',
+              marginTop: '20px',
+              paddingTop: '12px',
+              borderTop: '1px solid #dee2e6'
+            }}>
+              <button
+                onClick={handleCloseCommentPopup}
+                disabled={submittingComment}
+                style={{
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '10px 20px',
+                  fontSize: '14px',
+                  cursor: submittingComment ? 'not-allowed' : 'pointer',
+                  opacity: submittingComment ? 0.6 : 1
+                }}
+              >
+                {t.cancel}
+              </button>
+              <button
+                onClick={handleSubmitComment}
+                disabled={submittingComment || !commentText.trim()}
+                style={{
+                  backgroundColor: submittingComment || !commentText.trim() ? '#6c757d' : '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '10px 20px',
+                  fontSize: '14px',
+                  cursor: submittingComment || !commentText.trim() ? 'not-allowed' : 'pointer',
+                  opacity: submittingComment || !commentText.trim() ? 0.6 : 1
+                }}
+              >
+                {submittingComment ? t.submittingComment : t.submit}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

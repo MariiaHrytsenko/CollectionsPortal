@@ -33,6 +33,7 @@ const AppRouter = () => {
       <Route path="/categories" element={<PrivateRoute element={<CategoriesPage />} />} />
       <Route path="/categories/create" element={<PrivateRoute element={<CreateCategoryPage />} />} />
       <Route path="/categories/:id" element={<PrivateRoute element={<CategoryItemsPage />} />} />
+      <Route path="/categories/setup/:id" element={<PrivateRoute element={<CategorySetupPage />} />} />
       <Route path="/categories/info/:id" element={<PrivateRoute element={<CategoryItemsPage />} />} />
       <Route path="/items" element={<PrivateRoute element={<AllItemsPage />} />} />
       <Route path="/items/create" element={<PrivateRoute element={<CreateItemPage />} />} />
