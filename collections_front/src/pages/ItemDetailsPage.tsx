@@ -55,7 +55,11 @@ const translations = {
     failedToAddComment: "Failed to add comment.",
     failedToGetUser: "Failed to get user information.",
     commentTooShort: "Comment must be at least 1 character long.",
-    closePopup: "Close"
+    closePopup: "Close",
+    commentUpdatedSuccess: "Comment updated successfully!",
+    commentDeletedSuccess: "Comment deleted successfully!",
+    failedToUpdateComment: "Failed to update comment.",
+    failedToDeleteComment: "Failed to delete comment."
   },
   pl: {
     itemDetails: "Szczegóły przedmiotu",
@@ -104,7 +108,11 @@ const translations = {
     failedToAddComment: "Nie udało się dodać komentarza.",
     failedToGetUser: "Nie udało się pobrać informacji o użytkowniku.",
     commentTooShort: "Komentarz musi mieć co najmniej 1 znak.",
-    closePopup: "Zamknij"
+    closePopup: "Zamknij",
+    commentUpdatedSuccess: "Komentarz zaktualizowany pomyślnie!",
+    commentDeletedSuccess: "Komentarz usunięty pomyślnie!",
+    failedToUpdateComment: "Nie udało się zaktualizować komentarza.",
+    failedToDeleteComment: "Nie udało się usunąć komentarza."
   },
 };
 
@@ -118,6 +126,15 @@ interface ItemDetails {
     idchracteristic: number;
     nameCharacteristic: string;
     value: string;
+  }[];
+}
+
+interface CategoryDetails {
+  idcategory: number;
+  nameCategory: string;
+  characteristics: {
+    idcharacteristic: number;
+    nameCharacteristic: string;
   }[];
 }
 
@@ -144,12 +161,14 @@ const ItemDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   
   const [item, setItem] = useState<ItemDetails | null>(null);
+  const [category, setCategory] = useState<CategoryDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [popup, setPopup] = useState<{ message: string; success: boolean } | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsError, setCommentsError] = useState<string | null>(null);
@@ -197,6 +216,10 @@ const ItemDetailsPage = () => {
         .then((response) => {
           if (response.data) {
             setItem(response.data);
+            // Fetch category details after item is loaded
+            if (response.data.categoryId) {
+              fetchCategoryDetails(response.data.categoryId);
+            }
             // Fetch comments after item is loaded
             fetchComments();
           } else {
@@ -218,6 +241,18 @@ const ItemDetailsPage = () => {
       setCurrentUser(response.data);
     } catch (error) {
       console.warn('Failed to fetch current user:', error);
+    }
+  };
+
+  // Fetch category details
+  const fetchCategoryDetails = async (categoryId: number) => {
+    try {
+      const response = await axios.get(`${API_URL}/Categories/${categoryId}`, { withCredentials: true });
+      if (response.data && response.data.length > 0) {
+        setCategory(response.data[0]);
+      }
+    } catch (error) {
+      console.warn('Failed to fetch category details:', error);
     }
   };
 
@@ -267,6 +302,25 @@ const ItemDetailsPage = () => {
     });
   };
 
+  // Get merged characteristics (category characteristics with item values)
+  const getMergedCharacteristics = () => {
+    if (!category?.characteristics) {
+      return item?.chracteristics || [];
+    }
+
+    return category.characteristics.map(categoryChar => {
+      const itemChar = item?.chracteristics?.find(
+        ic => ic.idchracteristic === categoryChar.idcharacteristic
+      );
+      
+      return {
+        idchracteristic: categoryChar.idcharacteristic,
+        nameCharacteristic: categoryChar.nameCharacteristic,
+        value: itemChar?.value || ''
+      };
+    });
+  };
+
   // Handle opening comment popup
   const handleAddCommentClick = () => {
     setShowCommentPopup(true);
@@ -311,7 +365,7 @@ const ItemDetailsPage = () => {
       // Close popup and refresh comments
       setShowCommentPopup(false);
       setCommentText('');
-      setSuccessMessage(t.commentAddedSuccess);
+      setPopup({ message: t.commentAddedSuccess, success: true });
       
       // Refresh comments
       fetchComments();
@@ -325,6 +379,7 @@ const ItemDetailsPage = () => {
       }
     } finally {
       setSubmittingComment(false);
+      setTimeout(() => setPopup(null), 2500);
     }
   };
 
@@ -373,13 +428,14 @@ const ItemDetailsPage = () => {
 
       setEditingCommentId(null);
       setEditCommentText('');
-      setSuccessMessage(lang === 'pl' ? 'Komentarz zaktualizowany pomyślnie!' : 'Comment updated successfully!');
+      setPopup({ message: t.commentUpdatedSuccess, success: true });
 
     } catch (error: any) {
       console.error('Error updating comment:', error);
-      setCommentError(lang === 'pl' ? 'Nie udało się zaktualizować komentarza.' : 'Failed to update comment.');
+      setCommentError(t.failedToUpdateComment);
     } finally {
       setUpdatingComment(false);
+      setTimeout(() => setPopup(null), 2500);
     }
   };
 
@@ -399,18 +455,20 @@ const ItemDetailsPage = () => {
         prevComments.filter(c => c.iDcomment !== commentId)
       );
 
-      setSuccessMessage(lang === 'pl' ? 'Komentarz usunięty pomyślnie!' : 'Comment deleted successfully!');
+      setPopup({ message: t.commentDeletedSuccess, success: true });
 
     } catch (error: any) {
       console.error('Error deleting comment:', error);
-      setCommentError(lang === 'pl' ? 'Nie udało się usunąć komentarza.' : 'Failed to delete comment.');
+      setCommentError(t.failedToDeleteComment);
+    } finally {
+      setTimeout(() => setPopup(null), 2500);
     }
   };
 
   const handleEditClick = () => {
     if (item) {
       setEditName(item.nameItem);
-      setEditCharacteristics(item.chracteristics || []);
+      setEditCharacteristics(getMergedCharacteristics());
       setIsEditing(true);
     }
   };
@@ -419,7 +477,7 @@ const ItemDetailsPage = () => {
     setIsEditing(false);
     setEditFile(null);
     setError(null);
-    setSuccessMessage(null);
+    setPopup(null);
   };
 
   const handleSaveEdit = async () => {
@@ -489,10 +547,10 @@ const ItemDetailsPage = () => {
       setEditFile(null);
       
       // Show success message temporarily
-      setSuccessMessage(t.updateSuccess);
+      setPopup({ message: t.updateSuccess, success: true });
       setTimeout(() => {
-        setSuccessMessage(null);
-      }, 3000);
+        setPopup(null);
+      }, 2500);
 
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || t.updateFailed);
@@ -522,7 +580,7 @@ const ItemDetailsPage = () => {
       });
 
       // Show success message
-      setSuccessMessage(t.deleteSuccess);
+      setPopup({ message: t.deleteSuccess, success: true });
       
       // Navigate back to category after a short delay
       setTimeout(() => {
@@ -563,21 +621,6 @@ const ItemDetailsPage = () => {
           }}
         >
           {error}
-        </div>
-      ) : successMessage ? (
-        <div
-          style={{
-            color: "#28a745",
-            fontWeight: "bold",
-            margin: "2rem 0",
-            textAlign: "center",
-            backgroundColor: "#d4edda",
-            border: "1px solid #c3e6cb",
-            borderRadius: "4px",
-            padding: "12px"
-          }}
-        >
-          {successMessage}
         </div>
       ) : !item ? (
         <div
@@ -779,63 +822,66 @@ const ItemDetailsPage = () => {
               <h3 style={{ color: '#495057', marginBottom: '16px' }}>
                 {t.characteristics}
               </h3>
-              {item.chracteristics && item.chracteristics.length > 0 ? (
-                <div style={{
-                  backgroundColor: '#f8f9fa',
-                  border: '1px solid #dee2e6',
-                  borderRadius: '8px',
-                  padding: '16px'
-                }}>
-                  {(isEditing ? editCharacteristics : item.chracteristics).map((char, index) => (
-                    <div 
-                      key={char.idchracteristic}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '8px 0',
-                        borderBottom: '1px solid #dee2e6'
-                      }}
-                    >
-                      <span style={{ fontWeight: '500', color: '#495057' }}>
-                        {char.nameCharacteristic}:
-                      </span>
-                      {isEditing ? (
-                        <input
-                          type="text"
-                          value={char.value || ''}
-                          onChange={(e) => handleCharacteristicChange(index, e.target.value)}
-                          style={{
-                            padding: '4px 8px',
-                            border: '1px solid #ced4da',
-                            borderRadius: '4px',
-                            fontSize: '0.9rem',
-                            backgroundColor: 'white',
-                            minWidth: '150px',
-                            textAlign: 'right'
-                          }}
-                          placeholder={t.noValue}
-                        />
-                      ) : (
-                        <span style={{ color: '#6c757d', textAlign: 'right' }}>
-                          {char.value || t.noValue}
+              {(() => {
+                const characteristics = isEditing ? editCharacteristics : getMergedCharacteristics();
+                return characteristics && characteristics.length > 0 ? (
+                  <div style={{
+                    backgroundColor: '#f8f9fa',
+                    border: '1px solid #dee2e6',
+                    borderRadius: '8px',
+                    padding: '16px'
+                  }}>
+                    {characteristics.map((char, index) => (
+                      <div 
+                        key={char.idchracteristic}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '8px 0',
+                          borderBottom: index < characteristics.length - 1 ? '1px solid #dee2e6' : 'none'
+                        }}
+                      >
+                        <span style={{ fontWeight: '500', color: '#495057' }}>
+                          {char.nameCharacteristic}:
                         </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ 
-                  color: '#6c757d', 
-                  fontStyle: 'italic',
-                  padding: '16px',
-                  backgroundColor: '#f8f9fa',
-                  borderRadius: '8px',
-                  textAlign: 'center'
-                }}>
-                  {t.noCharacteristics}
-                </div>
-              )}
+                        {isEditing ? (
+                          <input
+                            type="text"
+                            value={char.value || ''}
+                            onChange={(e) => handleCharacteristicChange(index, e.target.value)}
+                            style={{
+                              padding: '4px 8px',
+                              border: '1px solid #ced4da',
+                              borderRadius: '4px',
+                              fontSize: '0.9rem',
+                              backgroundColor: 'white',
+                              minWidth: '150px',
+                              textAlign: 'right'
+                            }}
+                            placeholder={t.noValue}
+                          />
+                        ) : (
+                          <span style={{ color: '#6c757d', textAlign: 'right' }}>
+                            {char.value || t.noValue}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ 
+                    color: '#6c757d', 
+                    fontStyle: 'italic',
+                    padding: '16px',
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: '8px',
+                    textAlign: 'center'
+                  }}>
+                    {t.noCharacteristics}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Comments Section */}
@@ -1224,6 +1270,28 @@ const ItemDetailsPage = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+      
+      {/* Success/Error Popup */}
+      {popup && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 30,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: popup.success ? '#28a745' : '#dc3545',
+            color: '#fff',
+            padding: '12px 32px',
+            borderRadius: 8,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            zIndex: 1000,
+            fontWeight: 'bold',
+            fontSize: 16,
+          }}
+        >
+          {popup.message}
         </div>
       )}
     </div>
