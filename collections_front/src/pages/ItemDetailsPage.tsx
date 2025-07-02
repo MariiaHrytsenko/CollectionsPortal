@@ -153,12 +153,18 @@ const ItemDetailsPage = () => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentsError, setCommentsError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   
   // Comment popup state
   const [showCommentPopup, setShowCommentPopup] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [commentError, setCommentError] = useState<string | null>(null);
+  
+  // Edit comment state
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  const [editCommentText, setEditCommentText] = useState('');
+  const [updatingComment, setUpdatingComment] = useState(false);
   
   // Edit form state
   const [editName, setEditName] = useState("");
@@ -183,6 +189,9 @@ const ItemDetailsPage = () => {
       setError(t.itemIdMustBePositive);
       setLoading(false);
     } else {
+      // Fetch current user info
+      fetchCurrentUser();
+      
       axios
         .get(`${API_URL}/Item/${id}`, { withCredentials: true })
         .then((response) => {
@@ -201,6 +210,16 @@ const ItemDetailsPage = () => {
         });
     }
   }, [id, t]);
+
+  // Fetch current user information
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/Account/me`, { withCredentials: true });
+      setCurrentUser(response.data);
+    } catch (error) {
+      console.warn('Failed to fetch current user:', error);
+    }
+  };
 
   // Fetch comments for the item
   const fetchComments = async () => {
@@ -306,6 +325,85 @@ const ItemDetailsPage = () => {
       }
     } finally {
       setSubmittingComment(false);
+    }
+  };
+
+  // Handle edit comment click
+  const handleEditCommentClick = (comment: Comment) => {
+    setEditingCommentId(comment.iDcomment);
+    setEditCommentText(comment.text);
+    setCommentError(null);
+  };
+
+  // Handle cancel edit comment
+  const handleCancelEditComment = () => {
+    setEditingCommentId(null);
+    setEditCommentText('');
+    setCommentError(null);
+  };
+
+  // Handle save edited comment
+  const handleSaveEditComment = async (comment: Comment) => {
+    if (!editCommentText.trim()) {
+      setCommentError(t.commentTooShort);
+      return;
+    }
+
+    setUpdatingComment(true);
+    setCommentError(null);
+
+    try {
+      const updatedComment = {
+        ...comment,
+        text: editCommentText.trim()
+      };
+
+      await axios.put(`${API_URL}/Comment/${comment.iDcomment}`, updatedComment, { 
+        withCredentials: true 
+      });
+
+      // Update the comment in the local state
+      setComments(prevComments =>
+        prevComments.map(c =>
+          c.iDcomment === comment.iDcomment
+            ? { ...c, text: editCommentText.trim() }
+            : c
+        )
+      );
+
+      setEditingCommentId(null);
+      setEditCommentText('');
+      setSuccessMessage(lang === 'pl' ? 'Komentarz zaktualizowany pomyślnie!' : 'Comment updated successfully!');
+
+    } catch (error: any) {
+      console.error('Error updating comment:', error);
+      setCommentError(lang === 'pl' ? 'Nie udało się zaktualizować komentarza.' : 'Failed to update comment.');
+    } finally {
+      setUpdatingComment(false);
+    }
+  };
+
+  // Handle delete comment
+  const handleDeleteComment = async (commentId: number) => {
+    if (!window.confirm(lang === 'pl' ? 'Czy na pewno chcesz usunąć ten komentarz?' : 'Are you sure you want to delete this comment?')) {
+      return;
+    }
+
+    try {
+      await axios.delete(`${API_URL}/Comment/${commentId}`, { 
+        withCredentials: true 
+      });
+
+      // Remove the comment from the local state
+      setComments(prevComments =>
+        prevComments.filter(c => c.iDcomment !== commentId)
+      );
+
+      setSuccessMessage(lang === 'pl' ? 'Komentarz usunięty pomyślnie!' : 'Comment deleted successfully!');
+
+    } catch (error: any) {
+      console.error('Error deleting comment:', error);
+      setCommentError(lang === 'pl' ? 'Nie udało się usunąć komentarza.' : 'Failed to delete comment.');
     }
   };
 
@@ -827,59 +925,168 @@ const ItemDetailsPage = () => {
                       <div style={{ 
                         display: 'flex', 
                         alignItems: 'center', 
+                        justifyContent: 'space-between',
                         marginBottom: '12px' 
                       }}>
-                        {comment.avatarBase64 && comment.avatarBase64.trim() !== '' ? (
-                          <img
-                            src={`data:image/jpeg;base64,${comment.avatarBase64}`}
-                            alt={comment.username}
-                            style={{
-                              width: '40px',
-                              height: '40px',
-                              borderRadius: '50%',
-                              marginRight: '12px',
-                              objectFit: 'cover'
-                            }}
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = '/standart-user.png';
-                            }}
-                          />
-                        ) : (
-                          <img
-                            src="/standart-user.png"
-                            alt={comment.username}
-                            style={{
-                              width: '40px',
-                              height: '40px',
-                              borderRadius: '50%',
-                              marginRight: '12px',
-                              objectFit: 'cover'
-                            }}
-                          />
-                        )}
-                        <div>
-                          <div style={{ 
-                            fontWeight: '500', 
-                            color: '#495057',
-                            fontSize: '0.95rem' 
-                          }}>
-                            {comment.username}
-                          </div>
-                          <div style={{ 
-                            color: '#6c757d', 
-                            fontSize: '0.85rem' 
-                          }}>
-                            {formatDate(comment.createdDate)}
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                          {comment.avatarBase64 && comment.avatarBase64.trim() !== '' ? (
+                            <img
+                              src={`data:image/jpeg;base64,${comment.avatarBase64}`}
+                              alt={comment.username}
+                              style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '50%',
+                                marginRight: '12px',
+                                objectFit: 'cover'
+                              }}
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/standart-user.png';
+                              }}
+                            />
+                          ) : (
+                            <img
+                              src="/standart-user.png"
+                              alt={comment.username}
+                              style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '50%',
+                                marginRight: '12px',
+                                objectFit: 'cover'
+                              }}
+                            />
+                          )}
+                          <div>
+                            <div style={{ 
+                              fontWeight: '500', 
+                              color: '#495057',
+                              fontSize: '0.95rem' 
+                            }}>
+                              {comment.username}
+                            </div>
+                            <div style={{ 
+                              color: '#6c757d', 
+                              fontSize: '0.85rem' 
+                            }}>
+                              {formatDate(comment.createdDate)}
+                            </div>
                           </div>
                         </div>
+                        
+                        {/* Edit and Delete buttons - only show for current user's comments */}
+                        {currentUser && comment.iDcommentator === currentUser.id && editingCommentId !== comment.iDcomment && (
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                              onClick={() => handleEditCommentClick(comment)}
+                              style={{
+                                backgroundColor: '#ffc107',
+                                color: '#212529',
+                                border: 'none',
+                                borderRadius: '4px',
+                                padding: '4px 8px',
+                                fontSize: '12px',
+                                cursor: 'pointer',
+                                fontWeight: '500'
+                              }}
+                            >
+                              {lang === 'pl' ? 'Edytuj' : 'Edit'}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteComment(comment.iDcomment)}
+                              style={{
+                                backgroundColor: '#dc3545',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                padding: '4px 8px',
+                                fontSize: '12px',
+                                cursor: 'pointer',
+                                fontWeight: '500'
+                              }}
+                            >
+                              {lang === 'pl' ? 'Usuń' : 'Delete'}
+                            </button>
+                          </div>
+                        )}
                       </div>
-                      <div style={{ 
-                        color: '#212529',
-                        lineHeight: '1.5',
-                        fontSize: '0.95rem'
-                      }}>
-                        {comment.text}
-                      </div>
+                      
+                      {/* Comment text or edit input */}
+                      {editingCommentId === comment.iDcomment ? (
+                        <div>
+                          <textarea
+                            value={editCommentText}
+                            onChange={(e) => setEditCommentText(e.target.value)}
+                            style={{
+                              width: '100%',
+                              padding: '8px',
+                              border: '1px solid #ced4da',
+                              borderRadius: '4px',
+                              fontSize: '0.95rem',
+                              resize: 'vertical',
+                              minHeight: '80px',
+                              fontFamily: 'inherit',
+                              marginBottom: '8px'
+                            }}
+                          />
+                          
+                          {commentError && (
+                            <div style={{
+                              color: '#dc3545',
+                              fontSize: '12px',
+                              marginBottom: '8px'
+                            }}>
+                              {commentError}
+                            </div>
+                          )}
+                          
+                          <div style={{
+                            display: 'flex',
+                            gap: '8px'
+                          }}>
+                            <button
+                              onClick={() => handleSaveEditComment(comment)}
+                              disabled={updatingComment || !editCommentText.trim()}
+                              style={{
+                                backgroundColor: updatingComment || !editCommentText.trim() ? '#6c757d' : '#28a745',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                padding: '4px 12px',
+                                fontSize: '12px',
+                                cursor: updatingComment || !editCommentText.trim() ? 'not-allowed' : 'pointer',
+                                fontWeight: '500'
+                              }}
+                            >
+                              {updatingComment ? (lang === 'pl' ? 'Zapisywanie...' : 'Saving...') : (lang === 'pl' ? 'Zapisz' : 'Save')}
+                            </button>
+                            <button
+                              onClick={handleCancelEditComment}
+                              disabled={updatingComment}
+                              style={{
+                                backgroundColor: '#6c757d',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                padding: '4px 12px',
+                                fontSize: '12px',
+                                cursor: updatingComment ? 'not-allowed' : 'pointer',
+                                fontWeight: '500'
+                              }}
+                            >
+                              {lang === 'pl' ? 'Anuluj' : 'Cancel'}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ 
+                          color: '#212529',
+                          lineHeight: '1.5',
+                          fontSize: '0.95rem'
+                        }}>
+                          {comment.text}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

@@ -58,6 +58,7 @@ namespace collectionsProject.Controllers
                     Text = c.Text,
                     CreatedDate = c.CreatedDate,
                     Username = c.Commentator.UserName,
+                    IDcommentator = c.Commentator.Id,
                     AvatarBase64 = c.Commentator.Avatar != null ? Convert.ToBase64String(c.Commentator.Avatar) : null
                 })
                 .ToListAsync();
