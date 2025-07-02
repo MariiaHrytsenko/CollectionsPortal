@@ -39,17 +39,7 @@ function HomePage() {
   const t = translations[lang];
   return (
     <>
-      <nav className="main-navbar">
-        <Link to="/">Home</Link>
-        <Link to="/categories">Categories</Link>
-        <Link to="/categories/create">Create Category</Link>
-        <Link to="/items">All Items</Link>
-        <Link to="/items/create">Create Item</Link>
-        <Link to="/profile">Profile</Link>
-        <Link to="/friends">Friends</Link>
-        <Link to="/characteristics">Characteristics Manager</Link>
-        <Link to="/login" className="logout-link">Logout</Link>
-      </nav>
+      
       <div className="home-container">
         <h2>{t.welcome}</h2>
         <p>

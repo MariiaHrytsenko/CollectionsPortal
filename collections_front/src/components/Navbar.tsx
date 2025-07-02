@@ -66,7 +66,7 @@ export default function Navbar() {
         <h1 style={styles.title}>{t.portal}</h1>
       </Link>
       <ul style={styles.navLinks}>
-        {userId ? (
+        {true ? (
           <>
             <li style={styles.navItem}>
               <Link
@@ -96,19 +96,6 @@ export default function Navbar() {
             </li>
             <li style={styles.navItem}>
               <Link
-                to="/categories/create"
-                style={{
-                  ...styles.link,
-                  ...(hovered === "createCategory" ? styles.linkHover : {}),
-                }}
-                onMouseEnter={() => setHovered("createCategory")}
-                onMouseLeave={() => setHovered(null)}
-              >
-                {t.createCategory}
-              </Link>
-            </li>
-            <li style={styles.navItem}>
-              <Link
                 to="/items"
                 style={{
                   ...styles.link,
@@ -120,19 +107,7 @@ export default function Navbar() {
                 {t.allItems}
               </Link>
             </li>
-            <li style={styles.navItem}>
-              <Link
-                to="/items/create"
-                style={{
-                  ...styles.link,
-                  ...(hovered === "createItem" ? styles.linkHover : {}),
-                }}
-                onMouseEnter={() => setHovered("createItem")}
-                onMouseLeave={() => setHovered(null)}
-              >
-                {t.createItem}
-              </Link>
-            </li>
+            
             <li style={styles.navItem}>
               <Link
                 to="/profile"
@@ -159,19 +134,7 @@ export default function Navbar() {
                 {t.friends}
               </Link>
             </li>
-            <li style={styles.navItem}>
-              <Link
-                to="/catlist"
-                style={{
-                  ...styles.link,
-                  //...(hovered === "catList" ? styles.linkHover : {}),
-                }}
-                onMouseEnter={() => setHovered("catList")}
-                onMouseLeave={() => setHovered(null)}
-              >
-                {t.catList}
-              </Link>
-            </li>
+           
             <li style={styles.navItem}>
               <Link
                 to="/characteristics"

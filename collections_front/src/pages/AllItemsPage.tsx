@@ -1,160 +1,169 @@
-import React from "react";
-  import axios from "axios";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "../AppStyles.css";
 import { useLanguage } from "../LanguageContext";
+import axios from "axios";
 import config from "../AppConfig.json";
+
+const API_URL = config.API_URL;
 
 const translations = {
   en: {
     allItems: "All Items",
-    category: "Category",
-    description: "Description",
     noItems: "No items found.",
     search: "Search items...",
-    sortAsc: "Sort: A-Z",
-    sortDesc: "Sort: Z-A",
-    searchBy: "Search by:",
+    sortBy: "Sort by:",
+    sortOrder: "Sort order:",
+    ascending: "Ascending",
+    descending: "Descending",
     name: "Name",
-    characteristics: "Characteristics"
+    id: "ID",
+    category: "Category",
+    characteristics: "Characteristics",
+    noValue: "No value",
+    loading: "Loading...",
+    failedToLoadItems: "Failed to load items.",
+    noItemsFound: "No items found matching your search.",
+    totalItems: "Total Items:"
   },
   pl: {
     allItems: "Wszystkie przedmioty",
-    category: "Kategoria",
-    description: "Opis",
     noItems: "Nie znaleziono przedmiotów.",
     search: "Szukaj przedmiotów...",
-    sortAsc: "Sortuj: A-Z",
-    sortDesc: "Sortuj: Z-A",
-    searchBy: "Szukaj po:",
+    sortBy: "Sortuj według:",
+    sortOrder: "Kolejność sortowania:",
+    ascending: "Rosnąco",
+    descending: "Malejąco",
     name: "Nazwa",
-    characteristics: "Cechy"
+    id: "ID",
+    category: "Kategoria",
+    characteristics: "Cechy",
+    noValue: "Brak wartości",
+    loading: "Ładowanie...",
+    failedToLoadItems: "Nie udało się załadować przedmiotów.",
+    noItemsFound: "Nie znaleziono przedmiotów spełniających kryteria wyszukiwania.",
+    totalItems: "Łączna liczba przedmiotów:"
   },
 };
-
-const API_URL = config.API_URL;
 
 interface Item {
   iditem: number;
   nameItem: string;
-  photoItem: string | null;
+  photoItem: string;
   categoryId: number;
-  categoryName: string | null;
-  characteristics: {
-    idcharacteristic: number;
+  categoryName: string;
+  chracteristics: {
+    idchracteristic: number;
     nameCharacteristic: string;
-    value: string | null;
+    value: string;
   }[];
 }
 
 const AllItemsPage = () => {
   const { lang } = useLanguage();
   const t = translations[lang];
-  const [items, setItems] = React.useState<Item[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = React.useState("");
-  const [sortOrder, setSortOrder] = React.useState<"asc" | "desc">("asc");
-  const [searchBy, setSearchBy] = React.useState<"name" | "characteristics">("name");
+  const navigate = useNavigate();
+  
+  const [items, setItems] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
-  React.useEffect(() => {
+  useEffect(() => {
     setLoading(true);
     setError(null);
+    
     axios
       .get(`${API_URL}/Item`, { withCredentials: true })
       .then((response) => {
-        setItems(Array.isArray(response.data) ? response.data : []);
+        setItems(response.data || []);
         setLoading(false);
       })
       .catch(() => {
-        setError("Failed to load items.");
+        setError(t.failedToLoadItems);
         setLoading(false);
       });
-  }, []);
+  }, [t]);
 
-  const filteredItems = React.useMemo(() => {
-    return items.filter((item) => {
-      const searchLower = searchTerm.toLowerCase();
-      
-      if (searchBy === "name") {
-        return item.nameItem?.toLowerCase().includes(searchLower);
+  // Filter and sort items
+  const filteredAndSortedItems = React.useMemo(() => {
+    let filtered = items;
+
+    // Filter by search term
+    if (searchTerm.trim()) {
+      filtered = items.filter(item =>
+        item.nameItem.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.categoryName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.chracteristics?.some(char => 
+          char.nameCharacteristic.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          char.value?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      );
+    }
+
+    // Sort items
+    const sorted = [...filtered].sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      if (sortBy === "name") {
+        aValue = a.nameItem.toLowerCase();
+        bValue = b.nameItem.toLowerCase();
+      } else if (sortBy === "id") {
+        aValue = a.iditem;
+        bValue = b.iditem;
+      } else if (sortBy === "category") {
+        aValue = a.categoryName?.toLowerCase() || "";
+        bValue = b.categoryName?.toLowerCase() || "";
       } else {
-        // Search in characteristics
-        return item.characteristics?.some(
-          char => 
-            char.nameCharacteristic?.toLowerCase().includes(searchLower) ||
-            char.value?.toLowerCase().includes(searchLower)
-        );
+        // Sort by characteristic
+        const aChar = a.chracteristics?.find(c => c.nameCharacteristic === sortBy);
+        const bChar = b.chracteristics?.find(c => c.nameCharacteristic === sortBy);
+        aValue = aChar?.value?.toLowerCase() || "";
+        bValue = bChar?.value?.toLowerCase() || "";
       }
-    });
-  }, [items, searchTerm, searchBy]);
 
-  const sortedItems = React.useMemo(() => {
-    return [...filteredItems].sort((a, b) => {
-      const nameA = a.nameItem?.toLowerCase() || "";
-      const nameB = b.nameItem?.toLowerCase() || "";
-      return sortOrder === "asc" 
-        ? nameA.localeCompare(nameB)
-        : nameB.localeCompare(nameA);
+      if (aValue < bValue) return sortOrder === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;
+      return 0;
     });
-  }, [filteredItems, sortOrder]);
+
+    return sorted;
+  }, [items, searchTerm, sortBy, sortOrder]);
+
+  // Get available sort options
+  const getSortOptions = () => {
+    const options = [
+      { value: "name", label: t.name },
+      { value: "id", label: t.id },
+      { value: "category", label: t.category }
+    ];
+
+    // Get unique characteristics from all items
+    const allCharacteristics = new Set<string>();
+    items.forEach(item => {
+      item.chracteristics?.forEach(char => {
+        allCharacteristics.add(char.nameCharacteristic);
+      });
+    });
+
+    allCharacteristics.forEach(charName => {
+      options.push({
+        value: charName,
+        label: charName
+      });
+    });
+
+    return options;
+  };
 
   return (
     <div className="home-container">
-      <h2 style={{ color: "#007bff", marginBottom: "1.5rem" }}>{t.allItems}</h2>
-      
-      <div style={{ marginBottom: "1.5rem", display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-        <div style={{ flex: 1, minWidth: "200px" }}>
-          <input
-            type="text"
-            placeholder={t.search}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "0.5rem",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-            }}
-          />
-        </div>
-        
-        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-          <span>{t.searchBy}</span>
-          <select
-            value={searchBy}
-            onChange={(e) => setSearchBy(e.target.value as "name" | "characteristics")}
-            style={{ padding: "0.5rem", border: "1px solid #ddd", borderRadius: "4px" }}
-          >
-            <option value="name">{t.name}</option>
-            <option value="characteristics">{t.characteristics}</option>
-          </select>
-        </div>
-
-        <button
-          onClick={() => setSortOrder(prev => prev === "asc" ? "desc" : "asc")}
-          style={{
-            padding: "0.5rem 1rem",
-            border: "1px solid #007bff",
-            borderRadius: "4px",
-            background: "#007bff",
-            color: "#fff",
-            cursor: "pointer",
-          }}
-        >
-          {sortOrder === "asc" ? t.sortAsc : t.sortDesc}
-        </button>
-      </div>
-
       {loading ? (
-        <div
-          style={{
-            color: "#007bff",
-            fontWeight: "bold",
-            margin: "2rem 0",
-            textAlign: "center",
-          }}
-        >
-          Loading...
+        <div style={{ color: '#007bff', fontWeight: 'bold', margin: '2rem 0', textAlign: 'center' }}>
+          {t.loading}
         </div>
       ) : error ? (
         <div
@@ -168,67 +177,231 @@ const AllItemsPage = () => {
           {error}
         </div>
       ) : (
-        <div className="pinterest-grid">
-          {sortedItems.length === 0 ? (
-            <div>{t.noItems}</div>
-          ) : (
-            sortedItems.map((item) => (
-              <div className="item-card" key={item.iditem}>
-                <img
-                  src={
-                    item.photoItem && item.photoItem.trim() !== ""
-                      ? item.photoItem
-                      : "/default-item.jpeg"
-                  }
-                  alt={item.nameItem || "No name"}
-                  style={{ background: '#f6f8fa', objectFit: 'cover', width: '100%', height: 200 }}
-                />
-                <div className="item-card-content">
-                  <div className="item-title">
-                    {item.nameItem || (
-                      <span style={{ color: "#888" }}>[No name]</span>
-                    )}
+        <>
+          {/* Header Section */}
+          <div style={{
+            backgroundColor: '#f8f9fa',
+            border: '1px solid #dee2e6',
+            borderRadius: '8px',
+            padding: '20px',
+            marginBottom: '24px'
+          }}>
+            <h1 style={{ color: '#007bff', marginBottom: '12px', fontSize: '1.8rem' }}>
+              {t.allItems}
+            </h1>
+            <div style={{ marginBottom: '16px' }}>
+              <strong style={{ color: '#495057' }}>
+                {t.totalItems} 
+              </strong>
+              <span style={{ marginLeft: '8px', color: '#6c757d' }}>
+                {items.length}
+              </span>
+            </div>
+          </div>
+
+          {/* Search and Sort Controls */}
+          <div style={{
+            backgroundColor: '#f8f9fa',
+            border: '1px solid #dee2e6',
+            borderRadius: '8px',
+            padding: '16px',
+            marginBottom: '24px'
+          }}>
+            {/* Search Input - First Row */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{
+                display: 'block',
+                fontWeight: 500,
+                marginBottom: '4px',
+                color: '#495057',
+                fontSize: '0.9rem'
+              }}>
+                {t.search}
+              </label>
+              <input
+                type="text"
+                placeholder={t.search}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  width: '95%',
+                  padding: '8px 12px',
+                  border: '1px solid #ced4da',
+                  borderRadius: '4px',
+                  fontSize: '0.9rem',
+                  backgroundColor: 'white'
+                }}
+              />
+            </div>
+
+            {/* Sort Controls - Second Row */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '16px'
+            }}>
+              {/* Sort By */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontWeight: 500,
+                  marginBottom: '4px',
+                  color: '#495057',
+                  fontSize: '0.9rem'
+                }}>
+                  {t.sortBy}
+                </label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    fontSize: '0.9rem',
+                    backgroundColor: 'white'
+                  }}
+                >
+                  {getSortOptions().map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Sort Order */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontWeight: 500,
+                  marginBottom: '4px',
+                  color: '#495057',
+                  fontSize: '0.9rem'
+                }}>
+                  {t.sortOrder}
+                </label>
+                <select
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    fontSize: '0.9rem',
+                    backgroundColor: 'white'
+                  }}
+                >
+                  <option value="asc">{t.ascending}</option>
+                  <option value="desc">{t.descending}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Items Header */}
+          <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 24,
+          }}>
+            <h2 style={{ color: "#007bff" }}>{t.allItems}</h2>
+          </div>
+
+          {/* Items Grid */}
+          <div className="pinterest-grid">
+            {filteredAndSortedItems.length === 0 ? (
+              <div style={{ color: "#888", fontSize: "1rem" }}>
+                {items.length === 0 ? t.noItems : t.noItemsFound}
+              </div>
+            ) : (
+              filteredAndSortedItems.map((item) => (
+                <div 
+                  className="item-card" 
+                  key={item.iditem}
+                  onClick={() => navigate(`/items/${item.iditem}`)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <img 
+                    src={item.photoItem && item.photoItem.trim() !== '' 
+                      ? `data:image/jpeg;base64,${item.photoItem}` 
+                      : '/default-item.jpeg'
+                    } 
+                    alt={item.nameItem}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/default-item.jpeg';
+                    }}
+                  />
+                  <div className="item-card-header">
+                    <h3 className="item-title">{item.nameItem}</h3>
+                    <h4 className="item-id">
+                      <b>ID:</b> {item.iditem}
+                    </h4>
                   </div>
-                  <div className="item-info">
-                    {t.category}: {item.categoryName || (
-                      <span style={{ color: "#888" }}>[No category]</span>
-                    )} <span style={{ color: '#aaa', fontSize: 13, marginLeft: 8 }}>
-                      (ID: {item.categoryId ?? <span style={{ color: '#888' }}>[No ID]</span>})
-                    </span>
-                  </div>
-                  <div className="item-meta">
-                    <b>
-                      {lang === "pl" ? "Cechy:" : "Characteristics:"}
-                    </b>
-                    {item.characteristics && item.characteristics.length > 0 ? (
-                      <ul style={{ margin: 0, paddingLeft: 18 }}>
-                        {item.characteristics.map((char) => (
-                          <li key={char.idcharacteristic}>
-                            <b>
-                              {char.nameCharacteristic || (
-                                <span style={{ color: "#888" }}>[No name]</span>
-                              )}
-                              :
-                            </b>{" "}
-                            {char.value ? char.value : (
-                              <span style={{ color: "#888" }}>[No value]</span>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <div style={{ color: "#888" }}>
-                        {lang === "pl"
-                          ? "Brak cech"
-                          : "No characteristics"}
+                  <div className="item-card-content">
+                    {/* Category Info */}
+                    <div style={{ marginBottom: '12px' }}>
+                      <strong style={{ 
+                        color: '#495057', 
+                        fontSize: '0.9rem'
+                      }}>
+                        {t.category}:
+                      </strong>
+                      <span style={{ 
+                        marginLeft: '6px',
+                        color: '#007bff',
+                        cursor: 'pointer',
+                        textDecoration: 'underline'
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/categories/${item.categoryId}`);
+                      }}>
+                        {item.categoryName || t.noValue}
+                      </span>
+                    </div>
+
+                    {/* Characteristics */}
+                    {item.chracteristics && item.chracteristics.length > 0 && (
+                      <div style={{ marginTop: '12px' }}>
+                        <strong style={{ 
+                          color: '#495057', 
+                          fontSize: '0.9rem',
+                          display: 'block',
+                          marginBottom: '8px'
+                        }}>
+                          {t.characteristics}
+                        </strong>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          {item.chracteristics.map((char) => (
+                            <div 
+                              key={char.idchracteristic}
+                              style={{
+                                fontSize: '0.85rem',
+                                color: '#6c757d',
+                                padding: '2px 0'
+                              }}
+                            >
+                              <span style={{ fontWeight: '500', color: '#495057' }}>
+                                {char.nameCharacteristic}:
+                              </span>
+                              <span style={{ marginLeft: '6px' }}>
+                                {char.value || t.noValue}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
                 </div>
-              </div>
-            ))
-          )}
-        </div>
+              ))
+            )}
+          </div>
+        </>
       )}
     </div>
   );

@@ -32,7 +32,8 @@ const translations = {
     loadingCategory: "Loading category...",
     categoryId: "Category ID:",
     categoryCharacteristics: "Category Characteristics:",
-    noValue: "No value"
+    noValue: "No value",
+    editCategory: "Edit Category"
   },
   pl: {
     itemsInCategory: "Przedmioty w ",
@@ -59,7 +60,8 @@ const translations = {
     loadingCategory: "Ładowanie kategorii...",
     categoryId: "ID Kategorii:",
     categoryCharacteristics: "Cechy kategorii:",
-    noValue: "Brak wartości"
+    noValue: "Brak wartości",
+    editCategory: "Edytuj kategorię"
   },
 };
 
@@ -247,9 +249,27 @@ const CategoryItemsPage = () => {
               padding: '20px',
               marginBottom: '24px'
             }}>
-              <h1 style={{ color: '#007bff', marginBottom: '12px', fontSize: '1.8rem' }}>
-                {category.nameCategory}
-              </h1>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                marginBottom: '12px'
+              }}>
+                <h1 style={{ color: '#007bff', margin: 0, fontSize: '1.8rem' }}>
+                  {category.nameCategory}
+                </h1>
+                <button 
+                  className="button" 
+                  onClick={() => navigate(`/categories/setup/${category.idcategory}`)}
+                  style={{ 
+                    backgroundColor: '#28a745',
+                    fontSize: '0.9rem',
+                    padding: '8px 16px'
+                  }}
+                >
+                  {t.editCategory}
+                </button>
+              </div>
               <div style={{ marginBottom: '16px' }}>
                 <strong style={{ color: '#495057' }}>
                   {t.categoryId} 
