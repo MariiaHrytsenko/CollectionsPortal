@@ -47,15 +47,38 @@ export default function Navbar() {
   }, [lang]);
 
   useEffect(() => {
-    const storedUserId = localStorage.getItem("userId");
+    const storedUserId = localStorage.getItem("token");
     if (storedUserId) {
       setUserId(storedUserId);
     }
   }, []);
 
   const handleLogout = () => {
+    // Clear localStorage
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
+    
+    
+    // Clear all accessible cookies for this domain
+    document.cookie.split(";").forEach(cookie => {
+      const eqPos = cookie.indexOf("=");
+      const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+      if (name) {
+        // Clear cookie for current path
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+        // Clear cookie for root path
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;`;
+        // Clear cookie for current domain
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;domain=${window.location.hostname};path=/`;
+        // Clear cookie for parent domain (if subdomain)
+        if (window.location.hostname.includes('.')) {
+          const parentDomain = '.' + window.location.hostname.split('.').slice(-2).join('.');
+          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;domain=${parentDomain};path=/`;
+        }
+        
+      }
+    });
+    
     setUserId(null);
     navigate("/login");
   };
@@ -66,7 +89,7 @@ export default function Navbar() {
         <h1 style={styles.title}>{t.portal}</h1>
       </Link>
       <ul style={styles.navLinks}>
-        {true ? (
+        {userId ? (
           <>
             <li style={styles.navItem}>
               <Link
@@ -164,6 +187,19 @@ export default function Navbar() {
           </>
         ) : (
           <>
+          <li style={styles.navItem}>
+              <Link
+                to="/"
+                style={{
+                  ...styles.link,
+                  ...(hovered === "home" ? styles.linkHover : {}),
+                }}
+                onMouseEnter={() => setHovered("home")}
+                onMouseLeave={() => setHovered(null)}
+              >
+                {t.home}
+              </Link>
+            </li>
             <li style={styles.navItem}>
               <Link
                 to="/login"
