@@ -110,6 +110,18 @@ namespace collectionsProject.Services
 
             if (entry == null) return false;
 
+            // Remove the characteristic values from all items in this category
+            var itemsInCategory = await _context.Items
+                .Where(i => i.CategoryId == dto.Idcategory)
+                .Select(i => i.Iditem)
+                .ToListAsync();
+
+            var characteristicValues = _context.Chracteristics
+                .Where(ch => ch.Idchracteristic == dto.Idcharacteristic && itemsInCategory.Contains(ch.Iditem));
+
+            _context.Chracteristics.RemoveRange(characteristicValues);
+
+            // Remove the category-characteristic association
             _context.Category.Remove(entry);
             await _context.SaveChangesAsync();
             return true;
