@@ -33,7 +33,11 @@ const translations = {
     categoryId: "Category ID:",
     categoryCharacteristics: "Category Characteristics:",
     noValue: "No value",
-    editCategory: "Edit Category"
+    editCategory: "Edit Category",
+    deleteCategory: "Delete Category",
+    confirmDeleteCategory: "Are you sure you want to delete this category? This action cannot be undone and will also delete all items in this category.",
+    categoryDeleted: "Category deleted successfully!",
+    failedToDeleteCategory: "Failed to delete category."
   },
   pl: {
     itemsInCategory: "Przedmioty w ",
@@ -61,7 +65,11 @@ const translations = {
     categoryId: "ID Kategorii:",
     categoryCharacteristics: "Cechy kategorii:",
     noValue: "Brak wartości",
-    editCategory: "Edytuj kategorię"
+    editCategory: "Edytuj kategorię",
+    deleteCategory: "Usuń kategorię",
+    confirmDeleteCategory: "Czy na pewno chcesz usunąć tę kategorię? Ta akcja nie może być cofnięta i usunie również wszystkie przedmioty w tej kategorii.",
+    categoryDeleted: "Kategoria została usunięta pomyślnie!",
+    failedToDeleteCategory: "Nie udało się usunąć kategorii."
   },
 };
 
@@ -100,6 +108,7 @@ const CategoryItemsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [deleting, setDeleting] = useState(false);
   const navigate = useNavigate();
 
   const { id } = useParams();
@@ -148,6 +157,33 @@ const CategoryItemsPage = () => {
         });
     }
   }, [id]);
+
+  // Handle category deletion
+  const handleDeleteCategory = async () => {
+    if (!category) return;
+
+    const confirmDelete = window.confirm(t.confirmDeleteCategory);
+    if (!confirmDelete) return;
+
+    setDeleting(true);
+    try {
+      await axios.delete(`${API_URL}/Categories/delete`, {
+        data: {
+          idcategory: category.idcategory
+        },
+        withCredentials: true
+      });
+
+      alert(t.categoryDeleted);
+      // Navigate back to home or categories page after successful deletion
+      navigate('/');
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      alert(t.failedToDeleteCategory);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   // Filter and sort items
   const filteredAndSortedItems = React.useMemo(() => {
@@ -258,17 +294,34 @@ const CategoryItemsPage = () => {
                 <h1 style={{ color: '#007bff', margin: 0, fontSize: '1.8rem' }}>
                   {category.nameCategory}
                 </h1>
-                <button 
-                  className="button" 
-                  onClick={() => navigate(`/categories/setup/${category.idcategory}`)}
-                  style={{ 
-                    backgroundColor: '#28a745',
-                    fontSize: '0.9rem',
-                    padding: '8px 16px'
-                  }}
-                >
-                  {t.editCategory}
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button 
+                    className="button" 
+                    onClick={() => navigate(`/categories/setup/${category.idcategory}`)}
+                    style={{ 
+                      backgroundColor: '#28a745',
+                      fontSize: '0.9rem',
+                      padding: '8px 16px'
+                    }}
+                  >
+                    {t.editCategory}
+                  </button>
+                  <button 
+                    className="button" 
+                    onClick={handleDeleteCategory}
+                    disabled={deleting}
+                    style={{ 
+                      backgroundColor: '#dc3545',
+                      color: 'white',
+                      fontSize: '0.9rem',
+                      padding: '8px 16px',
+                      opacity: deleting ? 0.6 : 1,
+                      cursor: deleting ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    {deleting ? 'Deleting...' : t.deleteCategory}
+                  </button>
+                </div>
               </div>
               <div style={{ marginBottom: '16px' }}>
                 <strong style={{ color: '#495057' }}>

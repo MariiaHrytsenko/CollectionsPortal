@@ -30,6 +30,9 @@ const CategorySetupPage = () => {
   const [showCreatePopup, setShowCreatePopup] = useState(false);
   const [newCharName, setNewCharName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [showRenamePopup, setShowRenamePopup] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [renaming, setRenaming] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -144,6 +147,37 @@ const CategorySetupPage = () => {
     }
   };
 
+  const handleRenameCategory = async () => {
+    if (!cat || !newCategoryName.trim()) {
+      setPopup({ message: "Name cannot be empty.", success: false });
+      return;
+    }
+    setRenaming(true);
+    try {
+      await axios.put(
+        `${API_URL}/Categories/rename`,
+        {
+          idcategory: cat.idcategory,
+          newName: newCategoryName.trim()
+        },
+        { withCredentials: true }
+      );
+      // Update local state
+      setCat({
+        ...cat,
+        nameCategory: newCategoryName.trim()
+      });
+      setPopup({ message: "Category renamed successfully!", success: true });
+      setShowRenamePopup(false);
+      setNewCategoryName("");
+    } catch {
+      setPopup({ message: "Failed to rename category.", success: false });
+    } finally {
+      setRenaming(false);
+      setTimeout(() => setPopup(null), 2500);
+    }
+  };
+
   return (
     <div className="home-container" style={{ maxWidth: 600 }}>
       <div
@@ -184,8 +218,28 @@ const CategorySetupPage = () => {
       ) : cat ? (
         <>
           <div style={{ marginBottom: 24 }}>
-            <b>ID:</b> {cat.idcategory} <br />
-            <b>Name:</b> {cat.nameCategory}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div>
+                <b>ID:</b> {cat.idcategory} <br />
+                <b>Name:</b> {cat.nameCategory}
+              </div>
+              <button
+                className="button"
+                style={{ 
+                  background: '#ffc107', 
+                  color: '#212529',
+                  fontSize: '0.9rem',
+                  padding: '6px 12px',
+                  minWidth: 'auto'
+                }}
+                onClick={() => {
+                  setNewCategoryName(cat.nameCategory);
+                  setShowRenamePopup(true);
+                }}
+              >
+                Edit Name
+              </button>
+            </div>
           </div>
           <table
             style={{
@@ -382,6 +436,69 @@ const CategorySetupPage = () => {
                     disabled={creating}
                   >
                     {creating ? 'Creating...' : 'Confirm'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Rename category popup */}
+          {showRenamePopup && (
+            <div
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100vw',
+                height: '100vh',
+                background: 'rgba(0,0,0,0.3)',
+                zIndex: 2000,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              onClick={() => setShowRenamePopup(false)}
+            >
+              <div
+                style={{
+                  background: '#fff',
+                  padding: 32,
+                  borderRadius: 10,
+                  minWidth: 320,
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.18)',
+                  position: 'relative',
+                }}
+                onClick={e => e.stopPropagation()}
+              >
+                <h4 style={{ marginBottom: 16 }}>Rename Category</h4>
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder="Category name"
+                  value={newCategoryName}
+                  onChange={e => setNewCategoryName(e.target.value)}
+                  style={{ width: '100%', marginBottom: 16 }}
+                  disabled={renaming}
+                />
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                  <button
+                    className="button"
+                    style={{ background: '#6c757d', color: '#fff' }}
+                    onClick={() => { 
+                      setShowRenamePopup(false); 
+                      setNewCategoryName(""); 
+                    }}
+                    disabled={renaming}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="button"
+                    style={{ background: '#28a745', color: '#fff' }}
+                    onClick={handleRenameCategory}
+                    disabled={renaming}
+                  >
+                    {renaming ? 'Renaming...' : 'Confirm'}
                   </button>
                 </div>
               </div>

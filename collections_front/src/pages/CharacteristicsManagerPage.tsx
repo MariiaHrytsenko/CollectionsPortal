@@ -19,6 +19,9 @@ const CharacteristicsManagerPage = () => {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [popup, setPopup] = useState<{ message: string; success: boolean } | null>(null);
+  const [showCreatePopup, setShowCreatePopup] = useState(false);
+  const [newCharName, setNewCharName] = useState("");
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -80,6 +83,32 @@ const CharacteristicsManagerPage = () => {
       setPopup({ message: "Failed to delete characteristic.", success: false });
     } finally {
       setDeletingId(null);
+      setTimeout(() => setPopup(null), 2500);
+    }
+  };
+
+  const handleCreateCharacteristic = async () => {
+    if (!newCharName.trim()) {
+      setPopup({ message: "Name cannot be empty.", success: false });
+      return;
+    }
+    setCreating(true);
+    try {
+      await axios.post(
+        `${API_URL}/Characteristics`,
+        { nameCharacteristic: newCharName.trim() },
+        { withCredentials: true }
+      );
+      // Fetch updated list to ensure unique keys
+      const updated = await axios.get(`${API_URL}/Characteristics`, { withCredentials: true });
+      setCharacteristics(Array.isArray(updated.data) ? updated.data : []);
+      setPopup({ message: "Characteristic created!", success: true });
+      setShowCreatePopup(false);
+      setNewCharName("");
+    } catch {
+      setPopup({ message: "Failed to create characteristic.", success: false });
+    } finally {
+      setCreating(false);
       setTimeout(() => setPopup(null), 2500);
     }
   };
@@ -185,6 +214,76 @@ const CharacteristicsManagerPage = () => {
           </tbody>
         </table>
       )}
+      
+      {/* Create new characteristic button */}
+      <button
+        className="button"
+        style={{ margin: '24px 0 12px 0', background: '#007bff', color: '#fff' }}
+        onClick={() => setShowCreatePopup(true)}
+      >
+        Create new characteristic
+      </button>
+      
+      {/* Create characteristic popup */}
+      {showCreatePopup && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(0,0,0,0.3)',
+            zIndex: 2000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          onClick={() => setShowCreatePopup(false)}
+        >
+          <div
+            style={{
+              background: '#fff',
+              padding: 32,
+              borderRadius: 10,
+              minWidth: 320,
+              boxShadow: '0 2px 12px rgba(0,0,0,0.18)',
+              position: 'relative',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <h4 style={{ marginBottom: 16 }}>Create New Characteristic</h4>
+            <input
+              type="text"
+              className="input-field"
+              placeholder="Characteristic name"
+              value={newCharName}
+              onChange={e => setNewCharName(e.target.value)}
+              style={{ width: '100%', marginBottom: 16 }}
+              disabled={creating}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button
+                className="button"
+                style={{ background: '#6c757d', color: '#fff' }}
+                onClick={() => { setShowCreatePopup(false); setNewCharName(""); }}
+                disabled={creating}
+              >
+                Cancel
+              </button>
+              <button
+                className="button"
+                style={{ background: '#28a745', color: '#fff' }}
+                onClick={handleCreateCharacteristic}
+                disabled={creating}
+              >
+                {creating ? 'Creating...' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {popup && (
         <div
           style={{
