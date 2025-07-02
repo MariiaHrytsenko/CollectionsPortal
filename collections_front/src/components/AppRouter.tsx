@@ -29,7 +29,7 @@ const AppRouter = () => {
     <Routes>
       <Route path="/invitations/accept" element={<AcceptInvitationPage />} />
       <Route path="/login" element={<LoginRegister />} />
-      <Route path="/" element={<PrivateRoute element={<HomePage />} />} />
+      <Route path="/"  element={<HomePage />} />
       <Route path="/categories" element={<PrivateRoute element={<CategoriesPage />} />} />
       <Route path="/categories/create" element={<PrivateRoute element={<CreateCategoryPage />} />} />
       <Route path="/categories/:id" element={<PrivateRoute element={<CategoryItemsPage />} />} />
